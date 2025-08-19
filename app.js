@@ -7,8 +7,8 @@
 
 /* ================= CONFIG ================== */
 /* Replace with your Supabase details from dashboard */
-const SUPABASE_URL = 'TODO_SUPABASE_URL';
-const SUPABASE_ANON = 'TODO_SUPABASE_ANON';
+const SUPABASE_URL = 'https://yvlspahwnnzfctqqlmbu.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2bHNwYWh3bm56ZmN0cXFsbWJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNjQ4NzUsImV4cCI6MjA2OTk0MDg3NX0.5j6phM4WCe7XZo5xHdajwAShkV-hibECc_sp31JI6SQ';
 
 /* constants */
 const DEMO_USER_EMAIL = 'demo@ahx.app';
@@ -529,3 +529,4 @@ AHX.view.settings = () => AHX.util.html`
 `;
 
 /* ================= END of app.js ================== */
+
