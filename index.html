@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Academic Hub X - Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+
+  <!-- Loading Screen -->
+  <div id="loading" class="fixed inset-0 flex items-center justify-center bg-white z-50">
+    <img src="assets/loading.gif" alt="Loading..." class="w-20 h-20 animate-spin">
+  </div>
+
+  <!-- Login Form -->
+  <div id="login" class="hidden w-full max-w-sm bg-white p-6 rounded-xl shadow-md">
+    <div class="flex flex-col items-center">
+      <img src="assets/logo.png" alt="Logo" class="w-16 h-16 mb-4">
+      <h1 class="text-xl font-bold mb-4">Academic Hub X</h1>
+    </div>
+    <form onsubmit="return loginUser()" class="space-y-4">
+      <input id="username" type="text" placeholder="Username" required class="w-full border p-2 rounded">
+      <input id="password" type="password" placeholder="Password" required class="w-full border p-2 rounded">
+      <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">Login</button>
+    </form>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
