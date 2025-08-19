@@ -3,6 +3,7 @@
   "short_name": "AHX",
   "description": "Organize, study and track — offline.",
   "start_url": "index.html#/dashboard",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#2563eb",
