@@ -1,33 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Academic Hub X - Dashboard</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Academic Hub X — App</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body class="bg-gray-50 min-h-screen">
-
-  <!-- Navbar -->
-  <nav class="bg-blue-700 text-white p-4 flex justify-between">
-    <span class="font-bold">📚 Academic Hub X</span>
-    <button onclick="logoutUser()" class="bg-red-500 px-3 py-1 rounded">Logout</button>
+  <!-- Top Nav -->
+  <nav class="sticky top-0 z-40 bg-blue-700 text-white px-4 py-3 flex items-center gap-3 shadow">
+    <img src="assets/logo.png" class="w-7 h-7" alt="logo" />
+    <span class="font-bold tracking-wide">Academic Hub X</span>
+    <div class="ml-auto flex items-center gap-2">
+      <input id="globalSearch" class="input input-light w-48 md:w-72" placeholder="Search subjects/files" />
+      <a href="#/settings" class="btn-secondary">Settings</a>
+      <button id="logoutBtn" class="btn-danger">Logout</button>
+    </div>
   </nav>
 
-  <!-- Dashboard -->
-  <main class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-    <!-- Placeholder subjects (will be dynamic later) -->
-    <div class="bg-white p-4 rounded shadow hover:shadow-lg transition">
-      <h2 class="font-bold text-lg mb-2">Data Structures</h2>
-      <p class="text-sm text-gray-600">📄 PDFs, 📝 Notes, 📌 Assignments</p>
-    </div>
-    <div class="bg-white p-4 rounded shadow hover:shadow-lg transition">
-      <h2 class="font-bold text-lg mb-2">Operating Systems</h2>
-      <p class="text-sm text-gray-600">📄 PDFs, 📝 Notes, 📌 Assignments</p>
-    </div>
-    <!-- Add more cards later -->
-  </main>
+  <!-- Toasts -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- Route Outlet -->
+  <main id="outlet" class="p-6"></main>
+
+  <!-- Upload Modal -->
+  <dialog id="uploadModal" class="modal">
+    <form method="dialog" class="modal-box">
+      <h3 class="font-semibold text-lg mb-3">Upload files</h3>
+      <div class="dropzone" id="dropzone">Drop PDFs/notes here or click to choose</div>
+      <input id="fileInput" type="file" accept=".pdf,.md,.txt" multiple class="hidden" />
+      <div id="filePreview" class="mt-3 text-sm text-gray-600"></div>
+      <div class="modal-actions">
+        <button class="btn-secondary" value="cancel">Cancel</button>
+        <button id="saveUpload" class="btn-primary" value="default">Save</button>
+      </div>
+    </form>
+  </dialog>
 
   <script src="app.js"></script>
 </body>
