@@ -1,31 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Academic Hub X - Login</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Academic Hub X</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
-<body class="bg-gray-100 flex items-center justify-center h-screen">
-
-  <!-- Loading Screen -->
-  <div id="loading" class="fixed inset-0 flex items-center justify-center bg-white z-50">
-    <img src="assets/loading.gif" alt="Loading..." class="w-20 h-20 animate-spin">
-  </div>
-
-  <!-- Login Form -->
-  <div id="login" class="hidden w-full max-w-sm bg-white p-6 rounded-xl shadow-md">
-    <div class="flex flex-col items-center">
-      <img src="assets/logo.png" alt="Logo" class="w-16 h-16 mb-4">
-      <h1 class="text-xl font-bold mb-4">Academic Hub X</h1>
+<body class="bg-gray-100 min-h-screen">
+  <!-- Splash / Loading -->
+  <div id="splash" class="fixed inset-0 grid place-items-center bg-white animate-fadeIn">
+    <div class="flex flex-col items-center gap-3">
+      <img src="assets/logo.png" alt="AHX" class="w-16 h-16 animate-bounce-soft" />
+      <h1 class="text-xl font-bold tracking-wide">Academic Hub X</h1>
+      <div class="loader"></div>
     </div>
-    <form onsubmit="return loginUser()" class="space-y-4">
-      <input id="username" type="text" placeholder="Username" required class="w-full border p-2 rounded">
-      <input id="password" type="password" placeholder="Password" required class="w-full border p-2 rounded">
-      <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">Login</button>
-    </form>
   </div>
+
+  <!-- Login Card -->
+  <main id="login" class="hidden min-h-screen grid place-items-center px-4">
+    <section class="w-full max-w-sm bg-white p-6 rounded-2xl shadow-lg animate-slideUp">
+      <div class="flex flex-col items-center mb-4">
+        <img src="assets/logo.png" alt="Logo" class="w-12 h-12 mb-2" />
+        <h2 class="text-lg font-semibold">Welcome back</h2>
+        <p class="text-xs text-gray-500">Sign in to continue</p>
+      </div>
+      <form id="loginForm" class="space-y-3">
+        <input id="username" class="input" type="text" placeholder="Username" required />
+        <input id="password" class="input" type="password" placeholder="Password" required />
+        <button class="btn-primary w-full" type="submit">Login</button>
+      </form>
+      <div class="text-[11px] text-gray-500 mt-3 flex justify-between">
+        <a href="#/about" class="link">About</a>
+        <a href="#/settings" class="link">Settings</a>
+      </div>
+    </section>
+  </main>
 
   <script src="app.js"></script>
 </body>
