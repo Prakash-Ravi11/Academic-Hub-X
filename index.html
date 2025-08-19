@@ -1,25 +1,18 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" class="h-full">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
   <title>Academic Hub X</title>
-
-  <!-- PWA manifest -->
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#2563eb" />
-
-  <!-- Tailwind CDN (for quick start; in prod consider building Tailwind locally for smaller CSS) -->
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Supabase JS (UMD) - used by app.js -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- Styles & favicon -->
+  <!-- Supabase JS (v2 UMD) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/index.min.js"></script>
   <link rel="stylesheet" href="style.css">
   <link rel="icon" href="assets/icon-192.png">
 </head>
-<body class="h-full bg-gradient-to-b from-blue-50 to-white dark:from-gray-950 dark:to-gray-950 text-gray-900 dark:text-gray-100">
+<body class="h-full bg-gradient-to-b from-blue-50 to-white dark:from-gray-950 dark:to-gray-950 text-gray-900 dark:text-gray-100 font-sans">
 
   <!-- Splash -->
   <div id="splash" class="fixed inset-0 grid place-items-center bg-white dark:bg-gray-950 z-50 animate-fade">
@@ -30,17 +23,15 @@
     </div>
   </div>
 
-  <!-- App Shell -->
+  <!-- App -->
   <div id="app" class="hidden min-h-screen">
-    <!-- Top Nav -->
     <nav class="sticky top-0 z-40 bg-white/80 dark:bg-gray-950/75 backdrop-blur border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center justify-between">
       <div class="flex items-center gap-3">
         <a href="#/dashboard" class="brand" title="Home">AHX</a>
-        <a href="#/dashboard" class="nav-link text-sm text-gray-700 dark:text-gray-300">Dashboard</a>
-        <a href="#/search" class="nav-link text-sm text-gray-700 dark:text-gray-300">Search</a>
-        <a href="#/settings" class="nav-link text-sm text-gray-700 dark:text-gray-300">Settings</a>
+        <a href="#/dashboard" class="nav-link">Dashboard</a>
+        <a href="#/search" class="nav-link">Search</a>
+        <a href="#/settings" class="nav-link">Settings</a>
       </div>
-
       <div class="flex items-center gap-2">
         <button id="installBtn" class="icon-btn hidden" title="Install app">⬇️</button>
         <button id="themeBtn" class="icon-btn" title="Toggle theme">🌓</button>
@@ -49,10 +40,8 @@
       </div>
     </nav>
 
-    <!-- Views -->
     <main id="viewRoot" class="p-4 sm:p-5 view-root"></main>
 
-    <!-- FAB -->
     <button id="fab" class="fab hidden" title="Add files">+</button>
 
     <!-- Upload Modal -->
@@ -100,16 +89,16 @@
         <div class="flex gap-2">
           <button class="btn-primary w-full">Continue</button>
         </div>
-        <p class="text-xs text-gray-500 text-center">Tip: use <b>demo@ahx.app</b> / <b>1234</b> for quick entry (local demo)</p>
+        <p class="text-xs text-gray-500 text-center">Tip: use <b>demo@ahx.app</b> / <b>1234</b> for quick entry</p>
 
         <div class="mt-2 flex justify-center gap-2">
-          <button type="button" class="btn" onclick="AHX.auth.signInWithMagic()">Send Magic Link</button>
+          <button type="button" class="btn" onclick="AHX.auth.signInWithMagicPrompt()">Send Magic Link</button>
           <button type="button" class="btn" onclick="AHX.auth.signInWithOAuth('google')">Sign in with Google</button>
         </div>
       </form>
 
       <!-- Sign Up -->
-      <form id="formSignUp" class="hidden mt-5 space-y-3" onsubmit="return AHX.auth.signUp(event)">
+      <form id="formSignUp" class="hidden mt-5 space-y-3" onsubmit="return AHX.auth.signUpSubmit(event)">
         <input id="su_name" type="text" class="input" placeholder="Full name">
         <input id="su_email" type="email" class="input" placeholder="Email" required>
         <input id="su_pass" type="password" class="input" placeholder="Password (min 4)">
@@ -120,7 +109,6 @@
     </div>
   </div>
 
-  <!-- Main application script -->
   <script type="module" src="app.js"></script>
 </body>
 </html>
