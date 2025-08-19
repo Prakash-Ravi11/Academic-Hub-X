@@ -1,51 +1,105 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Academic Hub X — Login</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <title>Academic Hub X</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#2563eb" />
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="assets/icon-192.png">
 </head>
-<body class="bg-gradient-to-b from-blue-50 to-white min-h-screen flex items-center justify-center">
+<body class="h-full bg-gradient-to-b from-blue-50 to-white dark:from-gray-950 dark:to-gray-950 text-gray-900 dark:text-gray-100">
 
-  <!-- Loading splash -->
-  <div id="splash" class="fixed inset-0 flex items-center justify-center bg-white z-50 fade-in">
+  <!-- Splash -->
+  <div id="splash" class="fixed inset-0 grid place-items-center bg-white dark:bg-gray-950 z-50 animate-fade">
     <div class="flex flex-col items-center gap-4">
-      <div class="pulse-logo w-16 h-16 bg-blue-600 rounded-2xl grid place-items-center text-white text-2xl font-bold">AHX</div>
-      <div class="text-gray-600">Loading Academic Hub X…</div>
+      <img src="assets/icon-192.png" alt="AHX" class="w-16 h-16 rounded-2xl shadow-lg animate-pop">
+      <h1 class="text-2xl font-semibold">Academic Hub X</h1>
+      <div class="loader"></div>
     </div>
   </div>
 
-  <!-- Login card -->
-  <div id="loginCard" class="hidden w-full max-w-sm bg-white/80 backdrop-blur border rounded-2xl shadow-xl p-6 animate-pop">
-    <div class="flex flex-col items-center">
-      <div class="w-14 h-14 bg-blue-600 rounded-xl grid place-items-center text-white text-xl font-bold mb-3">AHX</div>
-      <h1 class="text-2xl font-semibold">Academic Hub X</h1>
-      <p class="text-sm text-gray-500">organize. study. track.</p>
+  <!-- App (hidden until auth passes) -->
+  <div id="app" class="hidden min-h-screen">
+    <!-- Top Nav -->
+    <nav class="sticky top-0 z-40 bg-white/80 dark:bg-gray-950/70 backdrop-blur border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="#/dashboard" class="brand" title="Home">AH</a>
+        <a href="#/dashboard" class="nav-link">Dashboard</a>
+        <a href="#/search" class="nav-link">Search</a>
+        <a href="#/settings" class="nav-link">Settings</a>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="themeBtn" class="icon-btn" title="Toggle theme">🌓</button>
+        <span id="userTag" class="text-sm text-gray-600 dark:text-gray-300"></span>
+        <button class="btn-danger" onclick="AHX.auth.logout()">Logout</button>
+      </div>
+    </nav>
+
+    <!-- Views -->
+    <main id="viewRoot" class="p-4 sm:p-5 view-root"></main>
+
+    <!-- FAB -->
+    <button id="fab" class="fab" title="Add files" onclick="AHX.ui.openUpload()">+</button>
+
+    <!-- Upload Modal -->
+    <div id="uploadModal" class="modal hidden">
+      <div class="modal-panel animate-pop">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-lg font-semibold">Upload PDFs</h3>
+          <button class="icon-btn" onclick="AHX.ui.closeUpload()">✕</button>
+        </div>
+        <div class="space-y-3">
+          <label class="block text-sm">Subject</label>
+          <select id="uploadSubject" class="input"></select>
+
+          <label class="block text-sm">Choose file(s)</label>
+          <input id="uploadFiles" type="file" accept="application/pdf" multiple class="input-file"/>
+
+          <div class="flex justify-end gap-2 pt-2">
+            <button class="btn" onclick="AHX.ui.closeUpload()">Cancel</button>
+            <button class="btn-primary" onclick="AHX.files.saveUploads()">Save</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-backdrop" onclick="AHX.ui.closeUpload()"></div>
     </div>
+  </div>
 
-    <form class="mt-6 space-y-4" onsubmit="return loginUser()">
-      <input id="username" class="input" type="text" placeholder="Username" required />
-      <input id="password" class="input" type="password" placeholder="Password" required />
-      <button class="btn-primary w-full">Login</button>
-    </form>
+  <!-- Auth Portal -->
+  <div id="auth" class="hidden min-h-screen grid place-items-center p-4">
+    <div class="card w-full max-w-sm animate-pop px-5 py-6">
+      <div class="flex flex-col items-center">
+        <img src="assets/icon-192.png" class="w-14 h-14 rounded-xl mb-2" alt="AHX">
+        <h2 class="text-xl font-semibold">Academic Hub X</h2>
+        <p class="text-xs text-gray-500">organize • study • offline</p>
+      </div>
 
-    <p class="mt-4 text-center text-xs text-gray-500">tip: <b>admin</b> / <b>1234</b></p>
+      <div class="mt-5 grid grid-cols-2 gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
+        <button id="tabSignIn" class="btn-primary !py-2 rounded-lg">Sign in</button>
+        <button id="tabSignUp" class="btn !py-2 rounded-lg">Sign up</button>
+      </div>
+
+      <!-- Sign In -->
+      <form id="formSignIn" class="mt-5 space-y-3" onsubmit="return AHX.auth.signIn(event)">
+        <input id="si_email" type="email" class="input" placeholder="Email" required>
+        <input id="si_pass" type="password" class="input" placeholder="Password" required>
+        <button class="btn-primary w-full">Continue</button>
+        <p class="text-xs text-gray-500 text-center">Tip: use <b>demo@ahx.app</b> / <b>1234</b> for quick entry</p>
+      </form>
+
+      <!-- Sign Up -->
+      <form id="formSignUp" class="hidden mt-5 space-y-3" onsubmit="return AHX.auth.signUp(event)">
+        <input id="su_name" type="text" class="input" placeholder="Full name" required>
+        <input id="su_email" type="email" class="input" placeholder="Email" required>
+        <input id="su_pass" type="password" class="input" placeholder="Password (min 4)" minlength="4" required>
+        <button class="btn-primary w-full">Create account</button>
+      </form>
+    </div>
   </div>
 
   <script src="app.js"></script>
-  <script>
-    // splash -> login
-    window.addEventListener('load', () => {
-      setTimeout(() => {
-        document.getElementById('splash').classList.add('fade-out');
-        setTimeout(() => {
-          document.getElementById('splash').style.display = 'none';
-          document.getElementById('loginCard').classList.remove('hidden');
-        }, 300);
-      }, 1200);
-    });
-  </script>
 </body>
 </html>
