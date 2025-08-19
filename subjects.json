@@ -1,9 +1,9 @@
 [
-  { "name": "Transforms & Boundary Value Problems", "code": "21MAB201T" },
-  { "name": "Data Structures & Algorithms", "code": "21CSC201J" },
-  { "name": "Computer Organization & Architecture", "code": "21CSS201T" },
-  { "name": "Advanced Programming Practice", "code": "21CSC203P" },
-  { "name": "Operating Systems", "code": "21CSC202J" },
-  { "name": "UHV-II: Universal Human Values", "code": "21LEM202T" },
-  { "name": "Professional Ethics", "code": "21LEM201T" }
+  { "name": "Transforms & Boundary Value Problems", "code": "21MAB201T", "folder": "subjects/Transforms_BVP" },
+  { "name": "Data Structures & Algorithms", "code": "21CSC201J", "folder": "subjects/Data_Structures" },
+  { "name": "Computer Organization & Architecture", "code": "21CSS201T", "folder": "subjects/Computer_Org_Architecture" },
+  { "name": "Advanced Programming Practice", "code": "21CSC203P", "folder": "subjects/Advanced_Programming" },
+  { "name": "Operating Systems", "code": "21CSC202J", "folder": "subjects/Operating_Systems" },
+  { "name": "UHV-II: Universal Human Values", "code": "21LEM202T", "folder": "subjects/UHV_II" },
+  { "name": "Professional Ethics", "code": "21LEM201T", "folder": "subjects/Professional_Ethics" }
 ]
