@@ -1,59 +1,123 @@
-/* AHX namespace keeps things modular */
-const AHX = {
+/* app.js - Academic Hub X
+   - Supabase v2 auth (CDN) + IndexedDB file storage
+   - PWA install prompt handling
+   - Router + lightweight view system
+   - Comments & hooks for future server sync (Supabase Storage/DB)
+*/
+
+/* ================= CONFIG ================== */
+/* Replace with your Supabase details from dashboard */
+const SUPABASE_URL = 'TODO_SUPABASE_URL';
+const SUPABASE_ANON = 'TODO_SUPABASE_ANON';
+
+/* constants */
+const DEMO_USER_EMAIL = 'demo@ahx.app';
+const DEMO_USER_PASS = '1234';
+
+/* ================= GLOBAL NAMESPACE ================== */
+window.AHX = {
   state: { subjects: [], db: null, user: null, theme: 'light' },
-  routes: {},
   util: {}, auth: {}, files: {}, ui: {}, view: {}
 };
 
-/* -------------------- boot -------------------- */
+/* ================= Import supabase (global from CDN) ================== */
+// Using supabase JS loaded as UMD: `supabase` global exists, export is createClient
+const { createClient } = window.supabase ?? window; // fallback safe-check
+const supabase = createClient ? createClient(SUPABASE_URL, SUPABASE_ANON) : null;
+
+/* ================= BOOTSTRAP ================== */
 (async function boot() {
-  // theme from preference/localStorage
+  // Theme init
   const savedTheme = localStorage.getItem('ahx_theme');
   if (savedTheme === 'dark' || (!savedTheme && matchMedia('(prefers-color-scheme: dark)').matches)) {
     document.documentElement.classList.add('dark'); AHX.state.theme = 'dark';
   }
 
-  // initial splash delay just for delight
-  setTimeout(() => document.getElementById('splash').style.display = 'none', 900);
+  // Splash timeout (small)
+  setTimeout(() => {
+    const s = document.getElementById('splash');
+    if (s) s.style.display = 'none';
+  }, 800);
 
-  // service worker
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+  // register service worker
+  if ('serviceWorker' in navigator) {
+    try {
+      await navigator.serviceWorker.register('sw.js');
+      console.log('Service worker registered');
+    } catch (err) { console.warn('SW registration failed', err); }
+  }
 
-  // load subjects.json
-  AHX.state.subjects = await (await fetch('subjects.json')).json();
+  // load subjects
+  try {
+    AHX.state.subjects = await (await fetch('subjects.json')).json();
+  } catch (err) {
+    console.error('Failed to load subjects.json', err);
+    AHX.state.subjects = [];
+  }
 
-  // prepare UI controls
-  document.getElementById('themeBtn').addEventListener('click', () => AHX.ui.toggleTheme());
-  document.getElementById('tabSignIn').addEventListener('click', () => AHX.ui.switchAuthTab('in'));
-  document.getElementById('tabSignUp').addEventListener('click', () => AHX.ui.switchAuthTab('up'));
+  // wire UI controls that exist before auth
+  const themeBtn = document.getElementById('themeBtn');
+  if (themeBtn) themeBtn.addEventListener('click', AHX.ui.toggleTheme);
 
-  // auth gate
+  const tabIn = document.getElementById('tabSignIn');
+  const tabUp = document.getElementById('tabSignUp');
+  if (tabIn) tabIn.addEventListener('click', () => AHX.ui.switchAuthTab('in'));
+  if (tabUp) tabUp.addEventListener('click', () => AHX.ui.switchAuthTab('up'));
+
+  if (document.getElementById('installBtn')) {
+    document.getElementById('installBtn').addEventListener('click', async () => {
+      if (deferredPrompt) {
+        const choice = await deferredPrompt.prompt();
+        deferredPrompt = null;
+        document.getElementById('installBtn').classList.add('hidden');
+      }
+    });
+  }
+
+  // open IndexedDB
+  AHX.state.db = await AHX.files.openDB();
+
+  // fill upload subject dropdown (if present)
+  const sel = document.getElementById('uploadSubject');
+  if (sel) {
+    AHX.state.subjects.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.key; opt.textContent = `${s.name} (${s.code})`;
+      sel.appendChild(opt);
+    });
+  }
+
+  // set up route handling
+  window.addEventListener('hashchange', AHX.view.render);
+  if (!location.hash) location.hash = '#/dashboard';
+
+  // auth state (local quick-check)
   AHX.state.user = AHX.auth.current();
   if (AHX.state.user) {
     document.getElementById('userTag').textContent = `Hi, ${AHX.state.user.name}`;
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) { logoutBtn.classList.remove('hidden'); logoutBtn.addEventListener('click', AHX.auth.logout); }
     document.getElementById('app').classList.remove('hidden');
   } else {
     document.getElementById('auth').classList.remove('hidden');
   }
 
-  // IndexedDB open
-  AHX.state.db = await AHX.files.openDB();
-
-  // router
-  addEventListener('hashchange', AHX.view.render);
-  if (!location.hash) location.hash = '#/dashboard';
+  // render first view
   AHX.view.render();
 
-  // fill upload subject dropdown
-  const sel = document.getElementById('uploadSubject');
-  AHX.state.subjects.forEach(s => {
-    const opt = document.createElement('option');
-    opt.value = s.key; opt.textContent = `${s.name} (${s.code})`;
-    sel.appendChild(opt);
-  });
 })();
 
-/* -------------------- utils -------------------- */
+/* ================= INSTALL PROMPT HANDLER ================== */
+/* Keep deferredPrompt to trigger install from UI */
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const btn = document.getElementById('installBtn');
+  if (btn) btn.classList.remove('hidden');
+});
+
+/* ================= UTILITIES ================== */
 AHX.util.html = (strings, ...vals) =>
   strings.reduce((acc, s, i) => acc + s + (vals[i] ?? ''), '');
 
@@ -63,64 +127,125 @@ AHX.util.bytes = n => {
   return `${(n/1024/1024).toFixed(2)} MB`;
 };
 
-/* -------------------- auth (local, replaceable later) -------------------- */
+/* ================= AUTH (Supabase + fallback demo) ================== */
 AHX.auth.current = () => {
   const raw = localStorage.getItem('ahx_user');
   return raw ? JSON.parse(raw) : null;
 };
 
-AHX.auth.signIn = (e) => {
-  e.preventDefault();
-  const email = document.getElementById('si_email').value.trim().toLowerCase();
-  const pass  = document.getElementById('si_pass').value;
-  // demo shortcut
-  if (email === 'demo@ahx.app' && pass === '1234') {
+AHX.auth.signIn = async (e) => {
+  if (e && e.preventDefault) e.preventDefault();
+  const email = (document.getElementById('si_email')?.value || '').trim().toLowerCase();
+  const pass = (document.getElementById('si_pass')?.value || '');
+
+  // demo quick login (local)
+  if (email === DEMO_USER_EMAIL && pass === DEMO_USER_PASS) {
     const user = { id: 'demo', name: 'Demo User', email };
     localStorage.setItem('ahx_user', JSON.stringify(user));
-    location.reload(); return false;
+    location.reload();
+    return false;
   }
-  const key = `ahx_user_${email}`;
-  const rec = localStorage.getItem(key);
-  if (!rec) return alert('Account not found. Please sign up.');
-  const user = JSON.parse(rec);
-  if (user.pass !== pass) return alert('Wrong password.');
-  localStorage.setItem('ahx_user', JSON.stringify(user));
-  location.reload();
+
+  if (!supabase) { alert('Supabase not configured. Use demo credentials.'); return false; }
+
+  try {
+    // If password is empty -> magic link sign-in; else password sign in
+    if (!pass) {
+      const { data, error } = await supabase.auth.signInWithOtp({ email });
+      if (error) return alert('Magic link send failed: ' + error.message);
+      alert('Magic link sent to your email (check spam).');
+      return false;
+    } else {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
+      if (error) return alert('Sign in failed: ' + error.message);
+      if (data?.user) {
+        const short = { id: data.user.id, email: data.user.email, name: data.user.user_metadata?.full_name || data.user.email };
+        localStorage.setItem('ahx_user', JSON.stringify(short));
+        location.reload();
+      }
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Sign in error');
+  }
   return false;
 };
 
-AHX.auth.signUp = (e) => {
-  e.preventDefault();
-  const name  = document.getElementById('su_name').value.trim();
-  const email = document.getElementById('su_email').value.trim().toLowerCase();
-  const pass  = document.getElementById('su_pass').value;
-  const key   = `ahx_user_${email}`;
-  if (localStorage.getItem(key)) return alert('Account already exists. Sign in.');
-  const user = { id: crypto.randomUUID(), name, email, pass };
-  localStorage.setItem(key, JSON.stringify(user));
-  localStorage.setItem('ahx_user', JSON.stringify(user));
-  location.reload();
+AHX.auth.signUp = async (e) => {
+  if (e && e.preventDefault) e.preventDefault();
+  const name = (document.getElementById('su_name')?.value || '').trim();
+  const email = (document.getElementById('su_email')?.value || '').trim().toLowerCase();
+  const pass = (document.getElementById('su_pass')?.value || '');
+
+  if (!supabase) { alert('Supabase not configured. Local demo only.'); return false; }
+
+  try {
+    const opts = {};
+    if (name) opts.data = { full_name: name };
+    const { data, error } = await supabase.auth.signUp({ email, password: pass || undefined, options: opts });
+    if (error) return alert('Sign up failed: ' + error.message);
+    if (data?.user) {
+      const short = { id: data.user.id, name: name || data.user.email, email: data.user.email };
+      localStorage.setItem('ahx_user', JSON.stringify(short));
+      location.reload();
+    } else {
+      alert('Sign up initiated. Check your email for confirmation if required.');
+    }
+  } catch (err) { console.error(err); alert('Sign up error'); }
   return false;
 };
 
-AHX.auth.logout = () => {
+AHX.auth.signInWithMagic = async () => {
+  const email = (document.getElementById('si_email')?.value || '').trim().toLowerCase();
+  if (!email) return alert('Enter email for magic link.');
+  if (!supabase) return alert('Supabase not configured.');
+  const { error } = await supabase.auth.signInWithOtp({ email });
+  if (error) return alert('Magic link failed: ' + error.message);
+  alert('Magic link sent to ' + email);
+};
+
+AHX.auth.signInWithOAuth = async (provider) => {
+  if (!supabase) return alert('Supabase not configured.');
+  await supabase.auth.signInWithOAuth({ provider });
+};
+
+AHX.auth.logout = async () => {
+  // Supabase logout if configured
+  if (supabase) {
+    try { await supabase.auth.signOut(); } catch(e){ console.warn('supabase signout failed', e); }
+  }
   localStorage.removeItem('ahx_user');
   location.href = 'index.html';
 };
 
-/* -------------------- files (IndexedDB) -------------------- */
+// handle Supabase auth state changes (e.g., magic link or OAuth redirect)
+if (supabase) {
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (session?.user) {
+      const u = session.user;
+      const short = { id: u.id, email: u.email, name: u.user_metadata?.full_name || u.email };
+      localStorage.setItem('ahx_user', JSON.stringify(short));
+      // safe re-render if user is currently on auth page
+      if (location.hash.startsWith('#/')) AHX.view.render();
+    } else if (event === 'SIGNED_OUT') {
+      localStorage.removeItem('ahx_user');
+    }
+  });
+}
+
+/* ================= FILES: IndexedDB helpers ================== */
 AHX.files.openDB = () => new Promise((resolve, reject) => {
-  const req = indexedDB.open('ahx_db', 1);
-  req.onupgradeneeded = (e) => {
+  const r = indexedDB.open('ahx_db', 2);
+  r.onupgradeneeded = (e) => {
     const db = e.target.result;
     if (!db.objectStoreNames.contains('files')) {
       const store = db.createObjectStore('files', { keyPath: 'id' });
-      store.createIndex('by_subject', 'subjectKey', { unique:false });
-      store.createIndex('by_name', 'name', { unique:false });
+      store.createIndex('by_subject', 'subjectKey', { unique: false });
+      store.createIndex('by_name', 'name', { unique: false });
     }
   };
-  req.onsuccess = () => resolve(req.result);
-  req.onerror = () => reject(req.error);
+  r.onsuccess = () => resolve(r.result);
+  r.onerror = () => reject(r.error);
 });
 
 AHX.files.add = (records) => new Promise((resolve, reject) => {
@@ -168,32 +293,32 @@ AHX.files.clearAll = () => new Promise((resolve, reject) => {
   tx.onerror = () => reject(tx.error);
 });
 
-/* upload flow */
+/* Save uploaded files into IndexedDB (blobs) */
 AHX.files.saveUploads = async () => {
   const subjectKey = document.getElementById('uploadSubject').value;
   const input = document.getElementById('uploadFiles');
   const files = Array.from(input.files || []);
   if (!files.length) { alert('Choose at least one PDF'); return; }
+
   const records = await Promise.all(files.map(async (file) => {
     const buf = await file.arrayBuffer();
     return {
       id: crypto.randomUUID(),
       subjectKey,
       name: file.name,
-      type: file.type,
+      type: file.type || 'application/pdf',
       size: file.size,
       addedAt: Date.now(),
-      blob: new Blob([buf], { type: file.type })
+      blob: new Blob([buf], { type: file.type || 'application/pdf' })
     };
   }));
   await AHX.files.add(records);
   AHX.ui.closeUpload();
-  // refresh if we are on that subject page
   const { name, param } = AHX.view.getRoute();
   if (name === 'subject' && param === subjectKey) AHX.view.render();
 };
 
-/* -------------------- UI helpers -------------------- */
+/* ================= UI helpers ================== */
 AHX.ui.openUpload = (subjectKey) => {
   const modal = document.getElementById('uploadModal');
   if (subjectKey) document.getElementById('uploadSubject').value = subjectKey;
@@ -229,7 +354,7 @@ AHX.ui.switchAuthTab = (which) => {
   }
 };
 
-/* -------------------- Views & Router -------------------- */
+/* ================= Simple Router & Views ================== */
 AHX.view.getRoute = () => {
   const hash = location.hash || '#/dashboard';
   const parts = hash.slice(2).split('/');
@@ -250,6 +375,7 @@ AHX.view.render = async () => {
     document.getElementById('auth').classList.add('hidden');
   }
 
+  // show/hide FAB and set content
   if (name === 'dashboard') {
     root.innerHTML = AHX.view.dashboard();
     setTimeout(() => AHX.view.renderSubjectCards(), 30);
@@ -271,7 +397,7 @@ AHX.view.render = async () => {
   }
 };
 
-/* view templates */
+/* templates */
 AHX.view.dashboard = () => AHX.util.html`
   <div class="flex items-center justify-between mb-4">
     <h2 class="text-xl font-semibold">Dashboard</h2>
@@ -397,13 +523,9 @@ AHX.view.settings = () => AHX.util.html`
   <h2 class="text-xl font-semibold mb-3">Settings</h2>
   <div class="space-y-3">
     <button class="btn" onclick="AHX.ui.toggleTheme()">Toggle light/dark</button>
-    <button class="btn-danger" onclick="AHX.view.clearData()">Clear all local data</button>
-    <div class="text-xs text-gray-500">v0.2 — all data is stored locally (IndexedDB). Ready for future API integrations.</div>
+    <button class="btn-danger" onclick="if(confirm('Clear ALL stored files?')){AHX.files.clearAll().then(()=>alert('Cleared'));}">Clear all local data</button>
+    <div class="text-xs text-gray-500">v1.0 — local IndexedDB file storage. Supabase auth enabled (client-side). For server sync, integrate Supabase Storage (optional).</div>
   </div>
 `;
 
-AHX.view.clearData = () => {
-  if (confirm('Clear ALL stored files from this browser?')) {
-    AHX.files.clearAll().then(()=>alert('Cleared!'));
-  }
-};
+/* ================= END of app.js ================== */
