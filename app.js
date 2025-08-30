@@ -85,6 +85,36 @@ AHX.util.bytes = n => {
         }
       });
     }
+    // QR Scanner functionality
+AHX.files.addScannedFile = async (fileInfo) => {
+  try {
+    const record = {
+      id: crypto.randomUUID(),
+      name: fileInfo.name || 'Scanned File',
+      type: fileInfo.type || 'scanned',
+      url: fileInfo.url,
+      scannedAt: Date.now(),
+      subjectKey: 'scanned', // Default subject for scanned files
+      size: 0, // Unknown size for URLs
+      content: fileInfo.content || null
+    };
+    
+    await AHX.files.add([record]);
+    return record;
+  } catch (error) {
+    console.error('Failed to save scanned file:', error);
+    throw error;
+  }
+};
+
+// Update subjects to include scanned files
+AHX.state.subjects.push({
+  key: 'scanned',
+  name: 'Scanned Notes',
+  code: 'SCAN',
+  description: 'Files scanned via QR code'
+});
+
 
     // Open IndexedDB with fallback
     AHX.state.db = await AHX.files.openDB();
@@ -541,3 +571,4 @@ AHX.view.settings = () => AHX.util.html`
   <h2>Settings</h2>
   <button onclick="AHX.files.clearAll().then(() => alert('All files cleared'))">Clear all local files</button>
 `;
+
