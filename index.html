@@ -8,73 +8,47 @@
   <link rel="icon" href="icon-192.png">
   <link rel="apple-touch-icon" href="icon-192.png">
   <meta name="theme-color" content="#007AFF">
-  <meta name="description" content="Modern PWA for academic file management with AI-powered organization">
   <link rel="stylesheet" href="style.css">
-  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script defer src="https://unpkg.com/html5-qrcode@2.3.8/minified/html5-qrcode.min.js"></script>
+  <!-- Load Supabase first, then QR scanner, then our app -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/minified/html5-qrcode.min.js"></script>
   <style>
-    /* Apple-style Design System */
+    /* Critical CSS for loading and auth */
     :root {
-      --sf-pro: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
       --primary: #007AFF;
-      --primary-dark: #0056CC;
-      --success: #34C759;
-      --warning: #FF9500;
       --danger: #FF3B30;
-      --gray-50: #F9F9F9;
+      --success: #34C759;
       --gray-100: #F2F2F7;
-      --gray-200: #E5E5EA;
-      --gray-300: #D1D1D6;
       --gray-500: #8E8E93;
       --gray-700: #48484A;
       --gray-900: #1C1C1E;
-      --blur: blur(20px);
-      --shadow-light: 0 1px 3px rgba(0,0,0,0.1);
-      --shadow-medium: 0 4px 20px rgba(0,0,0,0.15);
       --shadow-heavy: 0 16px 60px rgba(0,0,0,0.3);
-      --radius-small: 8px;
-      --radius-medium: 12px;
       --radius-large: 20px;
       --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    * {
-      box-sizing: border-box;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-
     body {
-      font-family: var(--sf-pro);
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
       margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       min-height: 100vh;
     }
 
-    /* Loading Screen - Apple Style */
     .loading-screen {
       position: fixed;
       inset: 0;
-      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      background: linear-gradient(135deg, var(--primary), #0056CC);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       z-index: 9999;
-      transition: opacity 0.5s ease, visibility 0.5s ease;
+      color: white;
     }
 
     .loading-logo {
-      width: 100px;
-      height: 100px;
-      background: rgba(255,255,255,0.2);
-      backdrop-filter: var(--blur);
-      border-radius: var(--radius-large);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2.5rem;
-      color: white;
+      font-size: 3rem;
       margin-bottom: 2rem;
       animation: pulse 2s infinite;
     }
@@ -89,63 +63,30 @@
       margin-bottom: 1rem;
     }
 
-    .loading-text {
-      color: white;
-      font-size: 1.1rem;
-      font-weight: 500;
-      opacity: 0.8;
-      animation: fadeInOut 2s infinite;
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
 
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    @keyframes fadeInOut {
-      0%, 100% { opacity: 0.8; }
-      50% { opacity: 0.4; }
-    }
-
-    /* Hero Section */
     .hero {
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .hero-content {
       text-align: center;
       color: white;
-      max-width: 800px;
       padding: 2rem;
-      position: relative;
-      z-index: 2;
     }
 
     .hero-title {
       font-size: clamp(3rem, 8vw, 5rem);
       font-weight: 700;
       margin-bottom: 1.5rem;
-      background: linear-gradient(45deg, white, rgba(255,255,255,0.8));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
     }
 
     .hero-subtitle {
       font-size: 1.3rem;
       margin-bottom: 3rem;
       opacity: 0.9;
-      line-height: 1.6;
-      font-weight: 400;
+      max-width: 600px;
     }
 
     .cta-container {
@@ -156,46 +97,35 @@
     }
 
     .btn-cta {
-      padding: 1rem 2.5rem;
-      border-radius: var(--radius-medium);
+      padding: 1rem 2rem;
+      border-radius: 12px;
       font-weight: 600;
       text-decoration: none;
       transition: var(--transition);
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
+      cursor: pointer;
+      border: none;
       font-size: 1.1rem;
     }
 
     .btn-primary {
       background: white;
       color: var(--primary);
-      box-shadow: var(--shadow-medium);
-    }
-
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-heavy);
     }
 
     .btn-secondary {
       background: rgba(255,255,255,0.15);
       color: white;
-      backdrop-filter: var(--blur);
       border: 1px solid rgba(255,255,255,0.2);
     }
 
-    .btn-secondary:hover {
-      background: rgba(255,255,255,0.25);
-      transform: translateY(-2px);
-    }
-
-    /* Authentication Modal - Apple Style */
+    /* Auth Modal */
     .auth-modal {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.4);
-      backdrop-filter: var(--blur);
+      background: rgba(0,0,0,0.5);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -213,17 +143,11 @@
     .auth-panel {
       background: white;
       border-radius: var(--radius-large);
-      padding: 2.5rem;
-      max-width: 420px;
+      padding: 2rem;
+      max-width: 400px;
       width: calc(100% - 2rem);
       box-shadow: var(--shadow-heavy);
-      transform: translateY(20px);
-      transition: transform 0.3s ease;
       position: relative;
-    }
-
-    .auth-modal.active .auth-panel {
-      transform: translateY(0);
     }
 
     .close-btn {
@@ -234,18 +158,13 @@
       border: none;
       font-size: 1.5rem;
       cursor: pointer;
-      color: var(--gray-500);
       width: 32px;
       height: 32px;
       display: flex;
       align-items: center;
       justify-content: center;
       border-radius: 50%;
-      transition: var(--transition);
-    }
-
-    .close-btn:hover {
-      background: var(--gray-100);
+      color: var(--gray-500);
     }
 
     .auth-header {
@@ -256,19 +175,18 @@
     .auth-title {
       font-size: 1.8rem;
       font-weight: 700;
-      color: var(--gray-900);
       margin-bottom: 0.5rem;
+      color: var(--gray-900);
     }
 
     .auth-subtitle {
       color: var(--gray-500);
-      font-size: 1rem;
     }
 
     .auth-tabs {
       display: flex;
       background: var(--gray-100);
-      border-radius: var(--radius-medium);
+      border-radius: 12px;
       padding: 4px;
       margin-bottom: 2rem;
     }
@@ -276,7 +194,7 @@
     .auth-tab {
       flex: 1;
       padding: 0.75rem;
-      border-radius: var(--radius-small);
+      border-radius: 8px;
       background: transparent;
       border: none;
       font-weight: 600;
@@ -288,7 +206,7 @@
     .auth-tab.active {
       background: white;
       color: var(--primary);
-      box-shadow: var(--shadow-light);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
 
     .form-group {
@@ -306,11 +224,12 @@
     .form-input {
       width: 100%;
       padding: 1rem;
-      border: 2px solid var(--gray-200);
-      border-radius: var(--radius-medium);
+      border: 2px solid #E5E5EA;
+      border-radius: 12px;
       font-size: 1rem;
       transition: var(--transition);
       background: white;
+      box-sizing: border-box;
     }
 
     .form-input:focus {
@@ -325,7 +244,7 @@
       background: var(--primary);
       color: white;
       border: none;
-      border-radius: var(--radius-medium);
+      border-radius: 12px;
       font-weight: 600;
       font-size: 1rem;
       cursor: pointer;
@@ -336,68 +255,16 @@
       gap: 0.5rem;
     }
 
-    .form-button:hover {
-      background: var(--primary-dark);
-    }
-
     .form-button:disabled {
       opacity: 0.6;
       cursor: not-allowed;
-    }
-
-    .divider {
-      text-align: center;
-      margin: 1.5rem 0;
-      position: relative;
-      color: var(--gray-500);
-    }
-
-    .divider::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: var(--gray-200);
-    }
-
-    .divider span {
-      background: white;
-      padding: 0 1rem;
-      font-size: 0.9rem;
-    }
-
-    .social-buttons {
-      display: flex;
-      gap: 1rem;
-    }
-
-    .social-btn {
-      flex: 1;
-      padding: 1rem;
-      border: 2px solid var(--gray-200);
-      border-radius: var(--radius-medium);
-      background: white;
-      cursor: pointer;
-      transition: var(--transition);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      font-weight: 600;
-    }
-
-    .social-btn:hover {
-      border-color: var(--primary);
-      transform: translateY(-1px);
     }
 
     .error-message {
       background: #FFE6E6;
       color: var(--danger);
       padding: 1rem;
-      border-radius: var(--radius-medium);
+      border-radius: 12px;
       margin-bottom: 1rem;
       font-size: 0.9rem;
       border-left: 4px solid var(--danger);
@@ -407,71 +274,13 @@
       background: #E6F7E6;
       color: var(--success);
       padding: 1rem;
-      border-radius: var(--radius-medium);
+      border-radius: 12px;
       margin-bottom: 1rem;
       font-size: 0.9rem;
       border-left: 4px solid var(--success);
     }
 
-    /* QR Scanner Styles */
-    .qr-scanner-modal {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.9);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 2000;
-      opacity: 0;
-      visibility: hidden;
-      transition: all 0.3s ease;
-    }
-
-    .qr-scanner-modal.active {
-      opacity: 1;
-      visibility: visible;
-    }
-
-    .qr-scanner-panel {
-      background: white;
-      border-radius: var(--radius-large);
-      padding: 2rem;
-      max-width: 500px;
-      width: calc(100% - 2rem);
-      text-align: center;
-    }
-
-    #qr-reader {
-      border-radius: var(--radius-medium);
-      overflow: hidden;
-      margin: 1rem 0;
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-      .hero-title {
-        font-size: 2.5rem;
-      }
-      
-      .hero-subtitle {
-        font-size: 1.1rem;
-      }
-      
-      .cta-container {
-        flex-direction: column;
-        align-items: center;
-      }
-      
-      .btn-cta {
-        width: 100%;
-        max-width: 280px;
-      }
-      
-      .auth-panel {
-        padding: 2rem;
-        margin: 1rem;
-      }
-    }
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
@@ -479,29 +288,20 @@
   <div id="loadingScreen" class="loading-screen">
     <div class="loading-logo">🎓</div>
     <div class="loading-spinner"></div>
-    <div class="loading-text">Initializing Academic Hub X...</div>
+    <div class="loading-text">Loading Academic Hub X...</div>
   </div>
 
   <!-- Hero Landing -->
-  <div id="hero" class="hero">
-    <div class="hero-content">
+  <div id="hero" class="hero" style="display: none;">
+    <div>
       <h1 class="hero-title">Academic Hub X</h1>
       <p class="hero-subtitle">
-        The future of academic file management. Organize, sync, and access your study materials with intelligent categorization and seamless collaboration.
+        The future of academic file management. Organize, sync, and access your study materials with intelligent categorization.
       </p>
       <div class="cta-container">
-        <a href="#" class="btn-cta btn-primary" onclick="openAuth()">
-          Get Started Free
-          <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z"/>
-          </svg>
-        </a>
-        <a href="#features" class="btn-cta btn-secondary">
-          Learn More
-          <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M7 10l5 5 5-5z"/>
-          </svg>
-        </a>
+        <button class="btn-cta btn-primary" onclick="openAuth()">
+          Get Started Free →
+        </button>
       </div>
     </div>
   </div>
@@ -512,8 +312,8 @@
       <button class="close-btn" onclick="closeAuth()">×</button>
       
       <div class="auth-header">
-        <h2 class="auth-title">Welcome to Academic Hub X</h2>
-        <p class="auth-subtitle">Sign in to access your academic files</p>
+        <h2 class="auth-title">Welcome Back</h2>
+        <p class="auth-subtitle">Sign in to access your files</p>
       </div>
 
       <div class="auth-tabs">
@@ -536,7 +336,6 @@
         </div>
         <button type="submit" class="form-button" id="signinBtn">
           <span>Sign In</span>
-          <div class="loading-spinner" style="width: 16px; height: 16px; display: none;"></div>
         </button>
       </form>
 
@@ -556,98 +355,69 @@
         </div>
         <button type="submit" class="form-button" id="signupBtn">
           <span>Create Account</span>
-          <div class="loading-spinner" style="width: 16px; height: 16px; display: none;"></div>
         </button>
       </form>
-
-      <div class="divider">
-        <span>or continue with</span>
-      </div>
-
-      <div class="social-buttons">
-        <button class="social-btn" onclick="signInWithGoogle()">
-          <svg width="20" height="20" viewBox="0 0 24 24">
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-          </svg>
-          Google
-        </button>
-        <button class="social-btn" onclick="signInWithGitHub()">
-          <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 0C5.374 0 0 5.373 0 12 0 17.302 3.438 21.8 8.207 23.387c.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
-          </svg>
-          GitHub
-        </button>
-      </div>
-
-      <div style="text-align: center; margin-top: 2rem;">
-        <button class="btn-cta btn-secondary" onclick="openQRScanner()" style="font-size: 0.9rem; padding: 0.75rem 1.5rem;">
-          📷 Scan QR Code for Notes
-        </button>
-      </div>
     </div>
-  </div>
-
-  <!-- QR Scanner Modal -->
-  <div id="qrModal" class="qr-scanner-modal">
-    <div class="qr-scanner-panel">
-      <h3 style="margin-bottom: 1rem;">Scan QR Code</h3>
-      <p style="color: var(--gray-500); margin-bottom: 1rem;">Position the QR code within the frame to scan notes from your college</p>
-      <div id="qr-reader" style="width: 100%;"></div>
-      <button class="form-button" onclick="closeQRScanner()" style="margin-top: 1rem;">Close Scanner</button>
-    </div>
-  </div>
-
-  <!-- App Container (Hidden Initially) -->
-  <div id="app" style="display: none;">
-    <!-- Your app content will be loaded here after authentication -->
   </div>
 
   <script>
-    // Configuration - Replace with your actual Supabase credentials
+    // CRITICAL FIX: Initialize everything immediately, don't wait for libraries
+    let supabase = null;
+    let isInitialized = false;
+    
+    // Configuration - Replace with your actual credentials
     const SUPABASE_URL = 'https://yvlspahwnnzfctqqlmbu.supabase.co';
     const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2bHNwYWh3bm56ZmN0cXFsbWJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNjQ4NzUsImV4cCI6MjA2OTk0MDg3NX0.5j6phM4WCe7XZo5xHdajwAShkV-hibECc_sp31JI6SQ';
 
-    // Global state
-    let currentTab = 'signin';
-    let qrScanner = null;
-    let supabase = null;
+    // FIXED: Force hide loading screen after maximum time
+    setTimeout(() => {
+      hideLoadingScreen();
+    }, 3000); // 3 seconds maximum
 
-    // Initialize Supabase with error handling
-    try {
-      if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
-          auth: {
-            autoRefreshToken: true,
-            persistSession: true,
-            detectSessionInUrl: true
-          }
-        });
+    function hideLoadingScreen() {
+      const loadingScreen = document.getElementById('loadingScreen');
+      const hero = document.getElementById('hero');
+      if (loadingScreen) {
+        loadingScreen.style.display = 'none';
       }
-    } catch (error) {
-      console.error('Failed to initialize Supabase:', error);
+      if (hero) {
+        hero.style.display = 'flex';
+      }
     }
 
-    // Initialize app
-    document.addEventListener('DOMContentLoaded', function() {
-      setTimeout(() => {
-        const loadingScreen = document.getElementById('loadingScreen');
-        if (loadingScreen) {
-          loadingScreen.style.opacity = '0';
-          setTimeout(() => {
-            loadingScreen.style.display = 'none';
-          }, 500);
+    // FIXED: Initialize Supabase with proper error handling
+    function initializeSupabase() {
+      try {
+        if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+          supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+            auth: {
+              persistSession: true,
+              autoRefreshToken: true,
+              detectSessionInUrl: false // CRITICAL: Disable to prevent URL parsing errors
+            }
+          });
+          console.log('Supabase initialized successfully');
+        } else {
+          console.warn('Supabase library not loaded');
         }
-      }, 2000);
-    });
-
-    // Email validation helper
-    function isValidEmail(email) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      return emailRegex.test(email);
+      } catch (error) {
+        console.error('Supabase initialization failed:', error);
+        // Continue without Supabase - don't block the app
+      } finally {
+        isInitialized = true;
+        hideLoadingScreen();
+      }
     }
+
+    // Initialize when DOM is ready OR after timeout
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initializeSupabase);
+    } else {
+      initializeSupabase();
+    }
+
+    // Backup initialization after 1 second
+    setTimeout(initializeSupabase, 1000);
 
     // Auth modal functions
     function openAuth() {
@@ -659,19 +429,22 @@
     }
 
     function switchTab(tab) {
-      currentTab = tab;
-      
-      document.querySelectorAll('.auth-tab').forEach(btn => btn.classList.remove('active'));
-      event.target.classList.add('active');
+      const signinTab = document.querySelector('.auth-tab:first-child');
+      const signupTab = document.querySelector('.auth-tab:last-child');
+      const signinForm = document.getElementById('signinForm');
+      const signupForm = document.getElementById('signupForm');
       
       if (tab === 'signin') {
-        document.getElementById('signinForm').style.display = 'block';
-        document.getElementById('signupForm').style.display = 'none';
+        signinTab.classList.add('active');
+        signupTab.classList.remove('active');
+        signinForm.style.display = 'block';
+        signupForm.style.display = 'none';
       } else {
-        document.getElementById('signinForm').style.display = 'none';
-        document.getElementById('signupForm').style.display = 'block';
+        signinTab.classList.remove('active');
+        signupTab.classList.add('active');
+        signinForm.style.display = 'none';
+        signupForm.style.display = 'block';
       }
-      
       clearMessages();
     }
 
@@ -694,118 +467,106 @@
       document.getElementById('successMessage').style.display = 'none';
     }
 
-    function setLoading(formType, loading) {
-      const btn = document.getElementById(formType + 'Btn');
-      const spinner = btn.querySelector('.loading-spinner');
-      const span = btn.querySelector('span');
-      
-      if (loading) {
-        btn.disabled = true;
-        spinner.style.display = 'block';
-        span.textContent = 'Please wait...';
-      } else {
-        btn.disabled = false;
-        spinner.style.display = 'none';
-        span.textContent = formType === 'signin' ? 'Sign In' : 'Create Account';
-      }
-    }
-
-    // Enhanced authentication handlers
+    // FIXED: Robust authentication with offline handling
     async function handleSignIn(event) {
       event.preventDefault();
-      const email = document.getElementById('signin-email').value;
+      const email = document.getElementById('signin-email').value.trim();
       const password = document.getElementById('signin-password').value;
+      const button = document.getElementById('signinBtn');
       
-      setLoading('signin', true);
+      // Disable button
+      button.disabled = true;
+      button.querySelector('span').textContent = 'Signing in...';
       clearMessages();
       
       try {
+        // Check if we're online
         if (!navigator.onLine) {
           throw new Error('No internet connection. Please check your network and try again.');
         }
         
+        // Check if Supabase is available
         if (!supabase) {
-          throw new Error('Authentication service not configured properly.');
+          throw new Error('Authentication service unavailable. Please refresh and try again.');
         }
         
+        // Validate inputs
         if (!email || !password) {
           throw new Error('Please enter both email and password.');
         }
         
-        if (!isValidEmail(email)) {
-          throw new Error('Please enter a valid email address.');
-        }
-        
-        const signInPromise = supabase.auth.signInWithPassword({
-          email: email.trim(),
+        // FIXED: Add timeout to prevent hanging
+        const authPromise = supabase.auth.signInWithPassword({
+          email: email,
           password: password
         });
         
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Request timed out. Please try again.')), 15000)
-        );
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Request timed out. Please try again.')), 10000);
+        });
         
-        const { data, error } = await Promise.race([signInPromise, timeoutPromise]);
+        const { data, error } = await Promise.race([authPromise, timeoutPromise]);
         
         if (error) {
-          switch (error.message) {
-            case 'Invalid login credentials':
-              throw new Error('Incorrect email or password. Please try again.');
-            case 'Email not confirmed':
-              throw new Error('Please check your email and confirm your account first.');
-            case 'Too many requests':
-              throw new Error('Too many login attempts. Please wait a few minutes.');
-            default:
-              throw new Error(error.message || 'Failed to sign in. Please try again.');
+          // Handle specific Supabase errors
+          if (error.message.includes('Invalid login credentials')) {
+            throw new Error('Invalid email or password. Please check your credentials.');
+          } else if (error.message.includes('Email not confirmed')) {
+            throw new Error('Please verify your email address first.');
+          } else {
+            throw new Error(error.message || 'Sign in failed. Please try again.');
           }
         }
         
         if (data?.user) {
+          showSuccess('Sign in successful! Redirecting...');
+          
+          // Store user data
           const userData = {
             id: data.user.id,
             email: data.user.email,
-            name: data.user.user_metadata?.full_name || data.user.email.split('@')[0],
-            avatar: data.user.user_metadata?.avatar_url || null
+            name: data.user.user_metadata?.full_name || data.user.email.split('@')[0]
           };
           
-          try {
-            localStorage.setItem('ahx_user', JSON.stringify(userData));
-            localStorage.setItem('ahx_session', JSON.stringify(data.session));
-          } catch (storageError) {
-            console.warn('Failed to store user data locally:', storageError);
-          }
+          localStorage.setItem('ahx_user', JSON.stringify(userData));
           
-          showSuccess('Welcome back! Redirecting to dashboard...');
-          
+          // Redirect to app
           setTimeout(() => {
             window.location.href = 'app.html';
-          }, 1500);
+          }, 1000);
         } else {
-          throw new Error('Authentication failed. Please try again.');
+          throw new Error('Sign in failed. Please try again.');
         }
         
       } catch (error) {
         console.error('Sign in error:', error);
         
+        // FIXED: Better error messages for common issues
+        let errorMessage = error.message;
         if (error.message.includes('fetch')) {
-          showError('Network error. Please check your internet connection and try again.');
-        } else if (error.message.includes('JSON')) {
-          showError('Service temporarily unavailable. Please try again in a few moments.');
-        } else {
-          showError(error.message || 'Sign in failed. Please try again.');
+          errorMessage = 'Network error. Please check your connection and try again.';
+        } else if (error.message.includes('JSON') || error.message.includes('Offline')) {
+          errorMessage = 'Service temporarily unavailable. Please try again in a moment.';
         }
+        
+        showError(errorMessage);
       } finally {
-        setLoading('signin', false);
+        // Re-enable button
+        button.disabled = false;
+        button.querySelector('span').textContent = 'Sign In';
       }
     }
 
+    // FIXED: Robust sign up
     async function handleSignUp(event) {
       event.preventDefault();
       const name = document.getElementById('signup-name').value.trim();
       const email = document.getElementById('signup-email').value.trim();
       const password = document.getElementById('signup-password').value;
+      const button = document.getElementById('signupBtn');
       
-      setLoading('signup', true);
+      button.disabled = true;
+      button.querySelector('span').textContent = 'Creating account...';
       clearMessages();
       
       try {
@@ -814,224 +575,70 @@
         }
         
         if (!supabase) {
-          throw new Error('Authentication service not configured properly.');
+          throw new Error('Authentication service unavailable. Please refresh and try again.');
         }
         
         if (!name || !email || !password) {
-          throw new Error('Please fill in all required fields.');
-        }
-        
-        if (!isValidEmail(email)) {
-          throw new Error('Please enter a valid email address.');
+          throw new Error('Please fill in all fields.');
         }
         
         if (password.length < 6) {
           throw new Error('Password must be at least 6 characters long.');
         }
         
-        const signUpPromise = supabase.auth.signUp({
+        const authPromise = supabase.auth.signUp({
           email: email,
           password: password,
           options: {
-            data: {
-              full_name: name
-            }
+            data: { full_name: name }
           }
         });
         
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Request timed out. Please try again.')), 15000)
-        );
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Request timed out. Please try again.')), 10000);
+        });
         
-        const { data, error } = await Promise.race([signUpPromise, timeoutPromise]);
+        const { data, error } = await Promise.race([authPromise, timeoutPromise]);
         
         if (error) {
-          switch (error.message) {
-            case 'User already registered':
-              throw new Error('An account with this email already exists. Please sign in instead.');
-            case 'Password should be at least 6 characters':
-              throw new Error('Password must be at least 6 characters long.');
-            default:
-              throw new Error(error.message || 'Failed to create account. Please try again.');
+          if (error.message.includes('User already registered')) {
+            throw new Error('An account with this email already exists. Please sign in instead.');
+          } else {
+            throw new Error(error.message || 'Sign up failed. Please try again.');
           }
         }
         
         if (data?.user) {
-          if (data.user.email_confirmed_at) {
-            showSuccess('Account created successfully! Redirecting...');
-            setTimeout(() => {
-              window.location.href = 'app.html';
-            }, 1500);
-          } else {
-            showSuccess('Account created! Please check your email and click the confirmation link before signing in.');
-            setTimeout(() => {
-              switchTab('signin');
-            }, 3000);
-          }
-        } else {
-          throw new Error('Account creation failed. Please try again.');
+          showSuccess('Account created! Please check your email to verify your account.');
+          // Switch to sign in tab after 3 seconds
+          setTimeout(() => switchTab('signin'), 3000);
         }
         
       } catch (error) {
         console.error('Sign up error:', error);
         
+        let errorMessage = error.message;
         if (error.message.includes('fetch')) {
-          showError('Network error. Please check your internet connection and try again.');
-        } else if (error.message.includes('JSON')) {
-          showError('Service temporarily unavailable. Please try again in a few moments.');
-        } else {
-          showError(error.message || 'Sign up failed. Please try again.');
+          errorMessage = 'Network error. Please check your connection and try again.';
+        } else if (error.message.includes('JSON') || error.message.includes('Offline')) {
+          errorMessage = 'Service temporarily unavailable. Please try again in a moment.';
         }
+        
+        showError(errorMessage);
       } finally {
-        setLoading('signup', false);
+        button.disabled = false;
+        button.querySelector('span').textContent = 'Create Account';
       }
     }
 
-    async function signInWithGoogle() {
-      try {
-        if (!navigator.onLine) {
-          throw new Error('No internet connection available.');
-        }
-        
-        if (!supabase) {
-          throw new Error('Authentication service not available.');
-        }
-        
-        showSuccess('Redirecting to Google...');
-        
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            redirectTo: `${window.location.origin}/app.html`,
-            queryParams: {
-              access_type: 'offline',
-              prompt: 'consent'
-            }
-          }
-        });
-        
-        if (error) throw error;
-        
-      } catch (error) {
-        console.error('Google sign in error:', error);
-        showError(error.message || 'Google sign in failed. Please try again.');
-      }
-    }
-
-    async function signInWithGitHub() {
-      try {
-        if (!navigator.onLine) {
-          throw new Error('No internet connection available.');
-        }
-        
-        if (!supabase) {
-          throw new Error('Authentication service not available.');
-        }
-        
-        showSuccess('Redirecting to GitHub...');
-        
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider: 'github',
-          options: {
-            redirectTo: `${window.location.origin}/app.html`
-          }
-        });
-        
-        if (error) throw error;
-        
-      } catch (error) {
-        console.error('GitHub sign in error:', error);
-        showError(error.message || 'GitHub sign in failed. Please try again.');
-      }
-    }
-
-    // QR Scanner functions
-    function openQRScanner() {
-      document.getElementById('qrModal').classList.add('active');
-      
-      if (typeof Html5Qrcode !== 'undefined') {
-        qrScanner = new Html5Qrcode("qr-reader");
-        
-        qrScanner.start(
-          { facingMode: "environment" },
-          {
-            fps: 10,
-            qrbox: { width: 250, height: 250 }
-          },
-          (decodedText, decodedResult) => {
-            console.log('QR Code detected:', decodedText);
-            handleQRResult(decodedText);
-            closeQRScanner();
-          },
-          (errorMessage) => {
-            // Handle scan error silently
-          }
-        ).catch(err => {
-          console.error('QR Scanner error:', err);
-          showError('Camera access denied or not available');
-        });
-      } else {
-        showError('QR Scanner not available');
-      }
-    }
-
-    function closeQRScanner() {
-      document.getElementById('qrModal').classList.remove('active');
-      
-      if (qrScanner) {
-        qrScanner.stop().then(ignore => {
-          qrScanner.clear();
-          qrScanner = null;
-        }).catch(err => console.log(err));
-      }
-    }
-
-    function handleQRResult(qrData) {
-      try {
-        let fileInfo;
-        
-        if (qrData.startsWith('http')) {
-          fileInfo = {
-            name: 'Scanned Notes',
-            url: qrData,
-            type: 'url',
-            scannedAt: Date.now()
-          };
-        } else {
-          fileInfo = JSON.parse(qrData);
-        }
-        
-        // Store in localStorage temporarily (would normally go to IndexedDB)
-        const scannedFiles = JSON.parse(localStorage.getItem('scanned_files') || '[]');
-        scannedFiles.push(fileInfo);
-        localStorage.setItem('scanned_files', JSON.stringify(scannedFiles));
-        
-        showSuccess('Notes scanned and saved successfully!');
-        
-      } catch (error) {
-        console.error('QR parsing error:', error);
-        showError('Invalid QR code format');
-      }
-    }
-
-    // Network status handling
+    // Network status monitoring
     window.addEventListener('online', () => {
-      clearMessages();
       showSuccess('Connection restored!');
+      setTimeout(clearMessages, 3000);
     });
 
     window.addEventListener('offline', () => {
       showError('You are offline. Please check your internet connection.');
-    });
-
-    // Smooth scrolling for anchor links
-    document.addEventListener('click', function(e) {
-      if (e.target.getAttribute('href') === '#features') {
-        e.preventDefault();
-        document.getElementById('features')?.scrollIntoView({ 
-          behavior: 'smooth' 
-        });
-      }
     });
   </script>
 </body>
