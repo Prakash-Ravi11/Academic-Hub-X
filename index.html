@@ -1296,24 +1296,51 @@
       }
     }
 
-    async function initializeSupabase() {
-      try {
-        if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
-          supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
-            auth: {
-              autoRefreshToken: true,
-              persistSession: true,
-              detectSessionInUrl: false
+  async function initializeSupabase() {
+  try {
+    if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+        auth: {
+          autoRefreshToken: true,
+          persistSession: true,
+          detectSessionInUrl: false, // CRITICAL: This prevents the JSON parsing error
+          storageKey: 'ahx_auth_token'
+        },
+        global: {
+          // Custom fetch wrapper to catch "Offline" responses before JSON parsing
+          fetch: async (input, init) => {
+            try {
+              // Check connectivity first
+              if (!navigator.onLine) {
+                throw new Error('No internet connection available');
+              }
+              
+              const response = await fetch(input, init);
+              
+              // Check if response is HTML error page instead of JSON
+              const contentType = response.headers.get('content-type');
+              if (!response.ok && (!contentType || !contentType.includes('application/json'))) {
+                throw new Error('Network error: Service temporarily unavailable');
+              }
+              
+              return response;
+            } catch (error) {
+              // Handle network failures gracefully
+              if (!navigator.onLine) {
+                throw new Error('No internet connection available');
+              }
+              throw error;
             }
-          });
-          console.log('✅ Supabase initialized');
-        } else {
-          console.warn('⚠️ Supabase SDK not loaded');
+          }
         }
-      } catch (error) {
-        console.warn('⚠️ Supabase initialization failed:', error);
-      }
+      });
+      console.log('✅ Supabase initialized with enhanced error handling');
     }
+  } catch (error) {
+    console.warn('⚠️ Supabase initialization failed:', error);
+  }
+}
+
 
     async function initializeDatabase() {
       try {
@@ -1443,67 +1470,106 @@
         return null;
       }
     }
-
     async function handleSignIn(event) {
-      event.preventDefault();
-      const email = document.getElementById('signin-email').value.trim();
-      const password = document.getElementById('signin-password').value;
-      const button = document.getElementById('signinBtn');
-      
-      button.disabled = true;
-      button.querySelector('span').textContent = 'Signing in...';
-      clearAuthMessages();
-      
-      try {
-        // Demo login for testing
-        if (email === 'demo@academichub.com' && password === 'demo123') {
-          const user = { id: 'demo', email, name: 'Demo User' };
-          localStorage.setItem('ahx_user', JSON.stringify(user));
-          AHX.state.user = user;
-          
-          showAuthMessage('Welcome back! Redirecting...', 'success');
-          setTimeout(() => {
-            closeAuth();
-            showApp();
-          }, 1500);
-          return;
-        }
-        
-        if (!supabase) {
-          throw new Error('Authentication service not available');
-        }
-        
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email, password
-        });
-        
-        if (error) throw error;
-        
-        if (data?.user) {
-          const user = {
-            id: data.user.id,
-            email: data.user.email,
-            name: data.user.user_metadata?.full_name || data.user.email.split('@')[0]
-          };
-          
-          localStorage.setItem('ahx_user', JSON.stringify(user));
-          AHX.state.user = user;
-          
-          showAuthMessage('Welcome back! Redirecting...', 'success');
-          setTimeout(() => {
-            closeAuth();
-            showApp();
-          }, 1500);
-        }
-        
-      } catch (error) {
-        console.error('Sign in error:', error);
-        showAuthMessage(error.message || 'Sign in failed. Try demo@academichub.com / demo123', 'error');
-      } finally {
-        button.disabled = false;
-        button.querySelector('span').textContent = 'Sign In';
+  event.preventDefault();
+  const email = document.getElementById('signin-email').value.trim();
+  const password = document.getElementById('signin-password').value;
+  const button = document.getElementById('signinBtn');
+  
+  button.disabled = true;
+  button.querySelector('span').textContent = 'Signing in...';
+  clearAuthMessages();
+  
+  try {
+    // CRITICAL: Check network connectivity first to prevent "Offline" JSON error
+    if (!navigator.onLine) {
+      throw new Error('No internet connection. Please check your network and try again.');
+    }
+    
+    // Validate inputs
+    if (!email || !password) {
+      throw new Error('Please enter both email and password.');
+    }
+    
+    // Check if Supabase is properly initialized
+    if (!supabase) {
+      throw new Error('Authentication service not available. Please refresh the page.');
+    }
+    
+    // FIXED: Add timeout to prevent hanging requests
+    const authPromise = supabase.auth.signInWithPassword({
+      email: email,
+      password: password
+    });
+    
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Request timed out. Please try again.')), 15000)
+    );
+    
+    const { data, error } = await Promise.race([authPromise, timeoutPromise]);
+    
+    if (error) {
+      // Handle specific Supabase auth errors
+      switch (error.message) {
+        case 'Invalid login credentials':
+          throw new Error('Invalid email or password. Please check your credentials.');
+        case 'Email not confirmed':
+          throw new Error('Please verify your email address first.');
+        case 'Too many requests':
+          throw new Error('Too many login attempts. Please wait a few minutes.');
+        default:
+          throw new Error(error.message || 'Authentication failed. Please try again.');
       }
     }
+    
+    if (data?.user) {
+      // Successfully authenticated
+      const userData = {
+        id: data.user.id,
+        email: data.user.email,
+        name: data.user.user_metadata?.full_name || data.user.email.split('@')[0]
+      };
+      
+      localStorage.setItem('ahx_user', JSON.stringify(userData));
+      AHX.state.user = userData;
+      
+      showAuthMessage('Sign in successful! Redirecting...', 'success');
+      
+      setTimeout(() => {
+        closeAuth();
+        showApp();
+      }, 1500);
+    } else {
+      throw new Error('Authentication failed. Please try again.');
+    }
+    
+  } catch (error) {
+    console.error('Sign in error:', error);
+    
+    // FIXED: Better error message handling for "Offline" and JSON errors
+    let userMessage = error.message;
+    
+    if (error.message.includes('fetch')) {
+      userMessage = 'Network error. Please check your internet connection.';
+    } else if (error.message.includes('JSON') || error.message.includes('Offline')) {
+      userMessage = 'Service temporarily unavailable. Please try again in a few moments.';
+    } else if (error.message.includes('Failed to fetch')) {
+      userMessage = 'Connection failed. Please check your internet and try again.';
+    } else if (!navigator.onLine) {
+      userMessage = 'You are offline. Please check your internet connection.';
+    }
+    
+    showAuthMessage(userMessage, 'error');
+    
+  } finally {
+    // Re-enable the button
+    button.disabled = false;
+    button.querySelector('span').textContent = 'Sign In';
+  }
+}
+
+
+   
 
     async function handleSignUp(event) {
       event.preventDefault();
@@ -2539,4 +2605,5 @@
   </script>
 </body>
 </html>
+
 
