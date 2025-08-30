@@ -6,19 +6,59 @@
   <title>Academic Hub X - Dashboard</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon-192.png">
-  <meta name="theme-color" content="#2563eb">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="theme-color" content="#007AFF">
   <link rel="stylesheet" href="style.css">
-  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script defer src="app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/minified/html5-qrcode.min.js"></script>
   <style>
-    /* Advanced Dashboard Styles */
+    /* Apple-Style Dashboard Design */
+    :root {
+      --sf-pro: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+      --primary: #007AFF;
+      --primary-dark: #0056CC;
+      --success: #34C759;
+      --warning: #FF9500;
+      --danger: #FF3B30;
+      --gray-50: #F9F9F9;
+      --gray-100: #F2F2F7;
+      --gray-200: #E5E5EA;
+      --gray-300: #D1D1D6;
+      --gray-500: #8E8E93;
+      --gray-700: #48484A;
+      --gray-900: #1C1C1E;
+      --blur: blur(20px);
+      --shadow-light: 0 1px 3px rgba(0,0,0,0.1);
+      --shadow-medium: 0 4px 20px rgba(0,0,0,0.15);
+      --shadow-heavy: 0 16px 60px rgba(0,0,0,0.3);
+      --radius-small: 8px;
+      --radius-medium: 12px;
+      --radius-large: 20px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      font-family: var(--sf-pro);
+      margin: 0;
+      background: var(--gray-50);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* Dashboard Layout */
     .dashboard-grid {
       display: grid;
       grid-template-columns: 280px 1fr;
       min-height: 100vh;
       gap: 0;
     }
-    
+
     @media (max-width: 768px) {
       .dashboard-grid {
         grid-template-columns: 1fr;
@@ -27,9 +67,10 @@
         display: none !important;
       }
     }
-    
+
+    /* Sidebar */
     .sidebar {
-      background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+      background: linear-gradient(180deg, var(--gray-900) 0%, #000000 100%);
       color: white;
       padding: 2rem 1rem;
       position: sticky;
@@ -37,7 +78,7 @@
       height: 100vh;
       overflow-y: auto;
     }
-    
+
     .sidebar-header {
       display: flex;
       align-items: center;
@@ -46,60 +87,101 @@
       padding-bottom: 1rem;
       border-bottom: 1px solid rgba(255,255,255,0.1);
     }
-    
-    .sidebar-nav {
-      space-y: 0.5rem;
+
+    .brand {
+      width: 40px;
+      height: 40px;
+      background: var(--primary);
+      border-radius: var(--radius-medium);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: white;
     }
-    
+
+    .brand-text {
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+
     .nav-item {
       display: flex;
       align-items: center;
       gap: 1rem;
       padding: 1rem;
-      border-radius: 12px;
+      border-radius: var(--radius-medium);
       color: rgba(255,255,255,0.7);
       text-decoration: none;
-      transition: all 0.3s ease;
+      transition: var(--transition);
       margin-bottom: 0.5rem;
+      cursor: pointer;
     }
-    
+
     .nav-item:hover, .nav-item.active {
       background: rgba(255,255,255,0.1);
       color: white;
       transform: translateX(8px);
     }
-    
+
     .nav-icon {
       font-size: 1.2rem;
       width: 24px;
       text-align: center;
     }
-    
+
+    /* Main Content */
     .main-content {
-      background: #f8fafc;
+      background: var(--gray-50);
       padding: 2rem;
       overflow-y: auto;
       max-height: 100vh;
     }
-    
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    .header-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin: 0;
+    }
+
+    .header-subtitle {
+      color: var(--gray-500);
+      margin-top: 0.5rem;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    /* Stats Grid */
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 1.5rem;
       margin-bottom: 2rem;
     }
-    
+
     .stat-card {
       background: white;
-      padding: 1.5rem;
-      border-radius: 16px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-      border: 1px solid rgba(0,0,0,0.05);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      padding: 2rem;
+      border-radius: var(--radius-large);
+      box-shadow: var(--shadow-light);
+      border: 1px solid var(--gray-200);
+      transition: var(--transition);
       position: relative;
       overflow: hidden;
     }
-    
+
     .stat-card::before {
       content: '';
       position: absolute;
@@ -107,98 +189,109 @@
       left: 0;
       right: 0;
       height: 4px;
-      background: linear-gradient(90deg, #4f46e5, #7c3aed);
+      background: linear-gradient(90deg, var(--primary), var(--primary-dark));
       transform: scaleX(0);
       transition: transform 0.3s ease;
     }
-    
+
     .stat-card:hover {
       transform: translateY(-4px);
-      box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+      box-shadow: var(--shadow-medium);
     }
-    
+
     .stat-card:hover::before {
       transform: scaleX(1);
     }
-    
+
     .stat-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin-bottom: 1rem;
     }
-    
+
     .stat-icon {
       width: 48px;
       height: 48px;
-      border-radius: 12px;
+      border-radius: var(--radius-medium);
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 1.5rem;
-      background: linear-gradient(45deg, #4f46e5, #7c3aed);
+      background: linear-gradient(45deg, var(--primary), var(--primary-dark));
       color: white;
     }
-    
+
     .stat-value {
       font-size: 2rem;
       font-weight: 700;
-      color: #1e293b;
+      color: var(--gray-900);
       margin-bottom: 0.5rem;
     }
-    
+
     .stat-label {
-      color: #64748b;
+      color: var(--gray-500);
       font-size: 0.9rem;
     }
-    
+
+    /* Content Grid */
     .content-grid {
       display: grid;
       grid-template-columns: 2fr 1fr;
       gap: 2rem;
     }
-    
+
     @media (max-width: 1024px) {
       .content-grid {
         grid-template-columns: 1fr;
       }
     }
-    
-    .recent-files {
+
+    /* Cards */
+    .card {
       background: white;
-      border-radius: 16px;
-      padding: 1.5rem;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      border-radius: var(--radius-large);
+      padding: 2rem;
+      box-shadow: var(--shadow-light);
+      border: 1px solid var(--gray-200);
     }
-    
-    .section-header {
+
+    .card-header {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: between;
       margin-bottom: 1.5rem;
       padding-bottom: 1rem;
-      border-bottom: 1px solid #e2e8f0;
+      border-bottom: 1px solid var(--gray-200);
     }
-    
+
+    .card-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    /* File List */
     .file-item {
       display: flex;
       align-items: center;
       gap: 1rem;
       padding: 1rem;
-      border-radius: 12px;
-      transition: all 0.3s ease;
+      border-radius: var(--radius-medium);
+      transition: var(--transition);
       cursor: pointer;
+      margin-bottom: 0.5rem;
     }
-    
+
     .file-item:hover {
-      background: #f1f5f9;
+      background: var(--gray-100);
       transform: translateX(4px);
     }
-    
+
     .file-icon {
       width: 40px;
       height: 40px;
-      border-radius: 8px;
+      border-radius: var(--radius-small);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -206,138 +299,247 @@
       color: white;
       font-size: 1.2rem;
     }
-    
+
     .file-info {
       flex: 1;
     }
-    
+
     .file-name {
       font-weight: 600;
-      color: #1e293b;
+      color: var(--gray-900);
       margin-bottom: 0.25rem;
     }
-    
+
     .file-meta {
       font-size: 0.8rem;
-      color: #64748b;
+      color: var(--gray-500);
     }
-    
-    .quick-actions {
-      background: white;
-      border-radius: 16px;
-      padding: 1.5rem;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-      height: fit-content;
-    }
-    
+
+    /* Quick Actions */
     .action-btn {
       display: flex;
       align-items: center;
       gap: 1rem;
       width: 100%;
       padding: 1rem;
-      border-radius: 12px;
+      border-radius: var(--radius-medium);
       background: transparent;
-      border: 1px solid #e2e8f0;
+      border: 1px solid var(--gray-200);
       text-align: left;
-      transition: all 0.3s ease;
+      transition: var(--transition);
       margin-bottom: 0.75rem;
       cursor: pointer;
     }
-    
+
     .action-btn:hover {
-      background: #f8fafc;
-      border-color: #4f46e5;
+      background: var(--gray-50);
+      border-color: var(--primary);
       transform: translateY(-2px);
     }
-    
-    .glassmorphism {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+
+    /* Buttons */
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: var(--radius-medium);
+      font-weight: 600;
+      text-decoration: none;
+      transition: var(--transition);
+      cursor: pointer;
+      border: 1px solid var(--gray-300);
+      background: white;
+      color: var(--gray-700);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
     }
-    
-    .animate-fade-in {
-      animation: fadeIn 0.6s ease-out;
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
     }
-    
-    .animate-slide-up {
-      animation: slideUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
     }
-    
-    @keyframes slideUp {
-      from {
-        opacity: 0;
-        transform: translateY(40px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+
+    /* FAB */
+    .fab {
+      position: fixed;
+      right: 2rem;
+      bottom: 2rem;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      box-shadow: var(--shadow-heavy);
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    
-    .progress-bar {
-      width: 100%;
-      height: 8px;
-      background: #e2e8f0;
-      border-radius: 4px;
-      overflow: hidden;
-      margin-top: 0.5rem;
+
+    .fab:hover {
+      transform: scale(1.1);
     }
-    
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #4f46e5, #7c3aed);
-      border-radius: 4px;
-      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Modals */
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      backdrop-filter: var(--blur);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
     }
+
+    .modal.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-panel {
+      background: white;
+      border-radius: var(--radius-large);
+      padding: 2rem;
+      max-width: 500px;
+      width: calc(100% - 2rem);
+      box-shadow: var(--shadow-heavy);
+      transform: translateY(20px);
+      transition: transform 0.3s ease;
+    }
+
+    .modal.active .modal-panel {
+      transform: translateY(0);
+    }
+
+    /* Notifications */
+    .notification {
+      position: fixed;
+      top: 2rem;
+      right: 2rem;
+      background: white;
+      padding: 1rem 1.5rem;
+      border-radius: var(--radius-medium);
+      box-shadow: var(--shadow-medium);
+      border-left: 4px solid var(--primary);
+      z-index: 2000;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+    }
+
+    .notification.show {
+      transform: translateX(0);
+    }
+
+    .notification.error {
+      border-left-color: var(--danger);
+    }
+
+    .notification.success {
+      border-left-color: var(--success);
+    }
+
+    /* Loading States */
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      color: var(--gray-500);
+    }
+
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--gray-200);
+      border-top: 3px solid var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 1rem;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Empty States */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 2rem;
+      color: var(--gray-500);
+    }
+
+    .empty-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    .hidden { display: none !important; }
   </style>
 </head>
-<body class="bg-gray-50 font-sans">
-  <!-- Advanced Dashboard Layout -->
+<body>
+  <!-- Dashboard Layout -->
   <div class="dashboard-grid">
     <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-header">
-        <div class="brand text-xl">AHX</div>
-        <span class="text-sm opacity-60">Dashboard</span>
+        <div class="brand">🎓</div>
+        <div>
+          <div class="brand-text">Academic Hub X</div>
+          <div style="font-size: 0.8rem; opacity: 0.6;">Dashboard</div>
+        </div>
       </div>
       
       <nav class="sidebar-nav">
-        <a href="#/dashboard" class="nav-item active">
+        <a href="#/dashboard" class="nav-item active" data-route="dashboard">
           <span class="nav-icon">🏠</span>
           <span>Dashboard</span>
         </a>
-        <a href="#/subjects" class="nav-item">
+        <a href="#/subjects" class="nav-item" data-route="subjects">
           <span class="nav-icon">📚</span>
           <span>Subjects</span>
         </a>
-        <a href="#/files" class="nav-item">
+        <a href="#/files" class="nav-item" data-route="files">
           <span class="nav-icon">📄</span>
           <span>All Files</span>
         </a>
-        <a href="#/search" class="nav-item">
+        <a href="#/search" class="nav-item" data-route="search">
           <span class="nav-icon">🔍</span>
           <span>Search</span>
         </a>
-        <a href="#/analytics" class="nav-item">
+        <a href="#/qr-scanner" class="nav-item" data-route="qr-scanner">
+          <span class="nav-icon">📷</span>
+          <span>QR Scanner</span>
+        </a>
+        <a href="#/analytics" class="nav-item" data-route="analytics">
           <span class="nav-icon">📊</span>
           <span>Analytics</span>
         </a>
-        <a href="#/settings" class="nav-item">
+        <a href="#/settings" class="nav-item" data-route="settings">
           <span class="nav-icon">⚙️</span>
           <span>Settings</span>
         </a>
       </nav>
       
-      <div class="mt-auto pt-4 border-t border-white/10">
-        <div class="flex items-center gap-3 p-3 rounded-lg glassmorphism">
-          <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+      <div style="margin-top: auto; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1);">
+        <div style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: var(--radius-medium);">
+          <div style="width: 32px; height: 32px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600;">
             U
           </div>
-          <div class="flex-1">
-            <div class="text-sm font-medium" id="sidebarUserName">User Name</div>
-            <div class="text-xs opacity-60">Premium Plan</div>
+          <div style="flex: 1;">
+            <div id="sidebarUserName" style="font-weight: 600; font-size: 0.9rem;">User</div>
+            <div style="font-size: 0.7rem; opacity: 0.6;">Premium Plan</div>
           </div>
         </div>
       </div>
@@ -345,180 +547,50 @@
     
     <!-- Main Content Area -->
     <main class="main-content">
-      <!-- Header -->
-      <header class="mb-8">
-        <div class="flex items-center justify-between">
-          <div>
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">Good morning! 👋</h1>
-            <p class="text-gray-600">Here's what's happening with your academic files today.</p>
-          </div>
-          
-          <div class="flex items-center gap-4">
-            <button id="themeBtn" class="icon-btn" title="Toggle theme">🌓</button>
-            <button id="installBtn" class="btn hidden">Install App</button>
-            <button class="btn-primary" onclick="AHX.ui.openUpload()">
-              <span>Upload Files</span>
-            </button>
-          </div>
+      <div id="viewRoot">
+        <!-- Content will be dynamically loaded here -->
+        <div class="loading">
+          <div class="spinner"></div>
+          Loading dashboard...
         </div>
-      </header>
-      
-      <!-- Stats Grid -->
-      <div class="stats-grid animate-fade-in">
-        <div class="stat-card">
-          <div class="stat-header">
-            <div class="stat-icon">📁</div>
-          </div>
-          <div class="stat-value" id="totalFiles">0</div>
-          <div class="stat-label">Total Files</div>
-          <div class="progress-bar">
-            <div class="progress-fill" style="width: 75%"></div>
-          </div>
-        </div>
-        
-        <div class="stat-card">
-          <div class="stat-header">
-            <div class="stat-icon">📚</div>
-          </div>
-          <div class="stat-value" id="totalSubjects">0</div>
-          <div class="stat-label">Subjects</div>
-          <div class="progress-bar">
-            <div class="progress-fill" style="width: 60%"></div>
-          </div>
-        </div>
-        
-        <div class="stat-card">
-          <div class="stat-header">
-            <div class="stat-icon">💾</div>
-          </div>
-          <div class="stat-value" id="storageUsed">0 MB</div>
-          <div class="stat-label">Storage Used</div>
-          <div class="progress-bar">
-            <div class="progress-fill" style="width: 45%"></div>
-          </div>
-        </div>
-        
-        <div class="stat-card">
-          <div class="stat-header">
-            <div class="stat-icon">⚡</div>
-          </div>
-          <div class="stat-value">98%</div>
-          <div class="stat-label">Sync Status</div>
-          <div class="progress-bar">
-            <div class="progress-fill" style="width: 98%"></div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Content Grid -->
-      <div class="content-grid animate-slide-up">
-        <!-- Recent Files -->
-        <section class="recent-files">
-          <div class="section-header">
-            <h2 class="text-xl font-bold text-gray-900">Recent Files</h2>
-            <a href="#/files" class="text-blue-600 hover:text-blue-700 text-sm font-medium">View All</a>
-          </div>
-          
-          <div id="recentFilesList" class="space-y-2">
-            <!-- Dynamic content will be loaded here -->
-            <div class="file-item">
-              <div class="file-icon">📄</div>
-              <div class="file-info">
-                <div class="file-name">Sample Document.pdf</div>
-                <div class="file-meta">Mathematics • 2.4 MB • 2 hours ago</div>
-              </div>
-              <button class="text-gray-400 hover:text-gray-600">⋯</button>
-            </div>
-          </div>
-        </section>
-        
-        <!-- Quick Actions -->
-        <section class="quick-actions">
-          <div class="section-header">
-            <h2 class="text-xl font-bold text-gray-900">Quick Actions</h2>
-          </div>
-          
-          <div>
-            <button class="action-btn" onclick="AHX.ui.openUpload()">
-              <span class="text-2xl">📤</span>
-              <div>
-                <div class="font-medium">Upload Files</div>
-                <div class="text-sm text-gray-500">Add new documents</div>
-              </div>
-            </button>
-            
-            <button class="action-btn" onclick="location.hash='#/search'">
-              <span class="text-2xl">🔍</span>
-              <div>
-                <div class="font-medium">Search Files</div>
-                <div class="text-sm text-gray-500">Find documents quickly</div>
-              </div>
-            </button>
-            
-            <button class="action-btn" onclick="location.hash='#/subjects'">
-              <span class="text-2xl">📚</span>
-              <div>
-                <div class="font-medium">Manage Subjects</div>
-                <div class="text-sm text-gray-500">Organize by categories</div>
-              </div>
-            </button>
-            
-            <button class="action-btn" onclick="location.hash='#/analytics'">
-              <span class="text-2xl">📊</span>
-              <div>
-                <div class="font-medium">View Analytics</div>
-                <div class="text-sm text-gray-500">Usage statistics</div>
-              </div>
-            </button>
-          </div>
-        </section>
       </div>
     </main>
   </div>
   
-  <!-- Upload Modal (Enhanced) -->
-  <div id="uploadModal" class="modal hidden">
-    <div class="modal-backdrop"></div>
-    <div class="modal-panel animate-pop max-w-2xl">
-      <div class="flex items-center justify-between mb-6">
-        <h3 class="text-2xl font-bold text-gray-800">Upload Files</h3>
-        <button onclick="AHX.ui.closeUpload()" class="icon-btn text-gray-400 hover:text-gray-600">
-          <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-          </svg>
-        </button>
+  <!-- Floating Action Button -->
+  <button id="fab" class="fab" title="Upload Files">+</button>
+  
+  <!-- Upload Modal -->
+  <div id="uploadModal" class="modal">
+    <div class="modal-panel">
+      <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 1.5rem;">
+        <h3 style="margin: 0; font-size: 1.5rem; color: var(--gray-900);">Upload Files</h3>
+        <button onclick="AHX.ui.closeUpload()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--gray-500);">×</button>
       </div>
       
-      <div class="space-y-6">
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Subject</label>
-            <select id="uploadSubject" class="input">
-              <option value="">Select a subject...</option>
-            </select>
-          </div>
-          
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Tags</label>
-            <input type="text" class="input" placeholder="lecture, notes, assignment">
-          </div>
+      <div style="display: grid; gap: 1.5rem;">
+        <div>
+          <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--gray-700);">Subject</label>
+          <select id="uploadSubject" class="input" style="width: 100%; padding: 1rem; border: 2px solid var(--gray-200); border-radius: var(--radius-medium);">
+            <option value="">Select a subject...</option>
+          </select>
         </div>
         
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Files</label>
-          <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-blue-400 transition-colors cursor-pointer">
-            <input id="uploadFiles" type="file" class="hidden" accept="application/pdf,image/*,.doc,.docx,.ppt,.pptx" multiple>
-            <div class="text-4xl mb-4">📁</div>
-            <p class="text-lg font-medium text-gray-700 mb-2">Drop files here or click to browse</p>
-            <p class="text-sm text-gray-500">Supports PDF, images, and office documents (max 10MB each)</p>
+          <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--gray-700);">Files</label>
+          <div id="dropZone" style="border: 2px dashed var(--gray-300); border-radius: var(--radius-medium); padding: 2rem; text-align: center; cursor: pointer; transition: var(--transition);">
+            <input type="file" id="uploadFiles" multiple accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.jpg,.png,.gif" style="display: none;">
+            <div style="font-size: 2rem; margin-bottom: 1rem;">📁</div>
+            <p style="margin: 0; color: var(--gray-600);">Drop files here or click to browse</p>
+            <p style="margin: 0.5rem 0 0 0; font-size: 0.8rem; color: var(--gray-500);">Supports PDF, DOC, PPT, images (max 50MB each)</p>
           </div>
         </div>
         
-        <div class="flex gap-4 justify-end">
-          <button class="btn px-6" onclick="AHX.ui.closeUpload()">Cancel</button>
-          <button class="btn-primary px-6" onclick="AHX.files.saveUploads()">
+        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+          <button class="btn" onclick="AHX.ui.closeUpload()">Cancel</button>
+          <button class="btn btn-primary" onclick="AHX.files.saveUploads()">
             <span>Upload Files</span>
-            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24" class="ml-2">
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
               <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
             </svg>
           </button>
@@ -526,65 +598,25 @@
       </div>
     </div>
   </div>
-  
-  <!-- Dynamic Content Area -->
-  <div id="viewRoot" class="hidden"></div>
-  
-  <script>
-    // Enhanced interactions
-    document.addEventListener('DOMContentLoaded', function() {
-      // File upload drag and drop
-      const uploadArea = document.querySelector('.border-dashed');
-      const fileInput = document.getElementById('uploadFiles');
+
+  <!-- QR Scanner Modal -->
+  <div id="qrModal" class="modal">
+    <div class="modal-panel">
+      <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 1.5rem;">
+        <h3 style="margin: 0; font-size: 1.5rem; color: var(--gray-900);">QR Code Scanner</h3>
+        <button onclick="AHX.ui.closeQRScanner()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--gray-500);">×</button>
+      </div>
       
-      if (uploadArea && fileInput) {
-        uploadArea.addEventListener('click', () => fileInput.click());
-        
-        uploadArea.addEventListener('dragover', (e) => {
-          e.preventDefault();
-          uploadArea.classList.add('border-blue-400', 'bg-blue-50');
-        });
-        
-        uploadArea.addEventListener('dragleave', () => {
-          uploadArea.classList.remove('border-blue-400', 'bg-blue-50');
-        });
-        
-        uploadArea.addEventListener('drop', (e) => {
-          e.preventDefault();
-          uploadArea.classList.remove('border-blue-400', 'bg-blue-50');
-          fileInput.files = e.dataTransfer.files;
-        });
-      }
+      <p style="color: var(--gray-500); margin-bottom: 1rem; text-align: center;">Position the QR code within the frame to scan notes from your college</p>
+      <div id="qr-reader" style="width: 100%; border-radius: var(--radius-medium); overflow: hidden; margin: 1rem 0;"></div>
       
-      // Navigation active states
-      document.addEventListener('click', (e) => {
-        if (e.target.classList.contains('nav-item')) {
-          document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-          e.target.classList.add('active');
-        }
-      });
-      
-      // Update stats periodically
-      setInterval(updateDashboardStats, 30000);
-    });
-    
-    async function updateDashboardStats() {
-      try {
-        const files = await AHX.files.all();
-        document.getElementById('totalFiles').textContent = files.length;
-        document.getElementById('totalSubjects').textContent = AHX.state.subjects.length;
-        
-        const totalSize = files.reduce((sum, file) => sum + (file.size || 0), 0);
-        document.getElementById('storageUsed').textContent = AHX.util.bytes(totalSize);
-      } catch (error) {
-        console.error('Failed to update stats:', error);
-      }
-    }
-    
-    // Initialize dashboard when loaded
-    if (typeof AHX !== 'undefined') {
-      updateDashboardStats();
-    }
-  </script>
+      <button class="btn btn-primary" onclick="AHX.ui.closeQRScanner()" style="width: 100%;">
+        Close Scanner
+      </button>
+    </div>
+  </div>
+
+  <!-- Load the enhanced app.js -->
+  <script defer src="app.js"></script>
 </body>
 </html>
