@@ -1,114 +1,393 @@
 <!doctype html>
-<html lang="en" class="h-full">
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-  <title>Academic Hub X</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Academic Hub X - Smart Academic File Management</title>
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#2563eb" />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Supabase JS (v2 UMD) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/index.min.js"></script>
+  <link rel="icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="description" content="Modern PWA for academic file management with AI-powered organization">
   <link rel="stylesheet" href="style.css">
-  <link rel="icon" href="assets/icon-192.png">
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script defer src="app.js"></script>
+  <style>
+    /* Advanced Landing Page Styles */
+    .landing-gradient {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .floating-shapes {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      z-index: 0;
+    }
+    
+    .shape {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      animation: float 6s ease-in-out infinite;
+    }
+    
+    .shape:nth-child(1) { width: 80px; height: 80px; top: 10%; left: 10%; animation-delay: 0s; }
+    .shape:nth-child(2) { width: 120px; height: 120px; top: 70%; left: 80%; animation-delay: 2s; }
+    .shape:nth-child(3) { width: 60px; height: 60px; top: 40%; right: 10%; animation-delay: 4s; }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-20px) rotate(180deg); }
+    }
+    
+    .hero-section {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .hero-content {
+      text-align: center;
+      color: white;
+      max-width: 800px;
+      padding: 2rem;
+    }
+    
+    .hero-title {
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      font-weight: 700;
+      margin-bottom: 1rem;
+      background: linear-gradient(45deg, #fff, #e0e7ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: fadeInUp 1s ease-out;
+    }
+    
+    .hero-subtitle {
+      font-size: clamp(1.1rem, 2vw, 1.5rem);
+      margin-bottom: 2rem;
+      opacity: 0.9;
+      animation: fadeInUp 1s ease-out 0.3s both;
+    }
+    
+    .cta-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      animation: fadeInUp 1s ease-out 0.6s both;
+    }
+    
+    .cta-primary {
+      background: linear-gradient(45deg, #4f46e5, #7c3aed);
+      color: white;
+      padding: 1rem 2rem;
+      border-radius: 50px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 10px 25px rgba(79, 70, 229, 0.3);
+    }
+    
+    .cta-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 40px rgba(79, 70, 229, 0.4);
+    }
+    
+    .cta-secondary {
+      background: rgba(255,255,255,0.1);
+      color: white;
+      padding: 1rem 2rem;
+      border-radius: 50px;
+      text-decoration: none;
+      font-weight: 600;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2);
+      transition: all 0.3s ease;
+    }
+    
+    .cta-secondary:hover {
+      background: rgba(255,255,255,0.2);
+      transform: translateY(-2px);
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .features-section {
+      padding: 5rem 2rem;
+      background: #f8fafc;
+    }
+    
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .feature-card {
+      background: white;
+      padding: 2rem;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .feature-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+    }
+    
+    .feature-icon {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(45deg, #4f46e5, #7c3aed);
+      border-radius: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+      font-size: 1.5rem;
+    }
+  </style>
 </head>
-<body class="h-full bg-gradient-to-b from-blue-50 to-white dark:from-gray-950 dark:to-gray-950 text-gray-900 dark:text-gray-100 font-sans">
-
-  <!-- Splash -->
-  <div id="splash" class="fixed inset-0 grid place-items-center bg-white dark:bg-gray-950 z-50 animate-fade">
-    <div class="flex flex-col items-center gap-4">
-      <img src="assets/icon-192.png" alt="AHX" class="w-16 h-16 rounded-2xl shadow-lg animate-pop">
-      <h1 class="text-2xl font-semibold">Academic Hub X</h1>
-      <div class="loader"></div>
+<body>
+  <!-- Splash Screen -->
+  <div id="splash" class="fixed inset-0 bg-gradient-to-br from-blue-600 to-purple-700 flex items-center justify-center z-50">
+    <div class="text-center text-white">
+      <div class="brand text-4xl mb-4 animate-bounce">AHX</div>
+      <div class="loader mb-4"></div>
+      <p class="text-lg opacity-80">Initializing Academic Hub X...</p>
     </div>
   </div>
 
-  <!-- App -->
-  <div id="app" class="hidden min-h-screen">
-    <nav class="sticky top-0 z-40 bg-white/80 dark:bg-gray-950/75 backdrop-blur border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <a href="#/dashboard" class="brand" title="Home">AHX</a>
-        <a href="#/dashboard" class="nav-link">Dashboard</a>
-        <a href="#/search" class="nav-link">Search</a>
-        <a href="#/settings" class="nav-link">Settings</a>
-      </div>
-      <div class="flex items-center gap-2">
-        <button id="installBtn" class="icon-btn hidden" title="Install app">⬇️</button>
-        <button id="themeBtn" class="icon-btn" title="Toggle theme">🌓</button>
-        <span id="userTag" class="text-sm text-gray-600 dark:text-gray-300"></span>
-        <button id="logoutBtn" class="btn-danger hidden">Logout</button>
-      </div>
-    </nav>
-
-    <main id="viewRoot" class="p-4 sm:p-5 view-root"></main>
-
-    <button id="fab" class="fab hidden" title="Add files">+</button>
-
-    <!-- Upload Modal -->
-    <div id="uploadModal" class="modal hidden">
-      <div class="modal-panel animate-pop">
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="text-lg font-semibold">Upload PDFs</h3>
-          <button class="icon-btn" onclick="AHX.ui.closeUpload()">✕</button>
+  <!-- Landing Page -->
+  <div id="landing" class="landing-gradient">
+    <div class="floating-shapes">
+      <div class="shape"></div>
+      <div class="shape"></div>
+      <div class="shape"></div>
+    </div>
+    
+    <section class="hero-section">
+      <div class="hero-content">
+        <h1 class="hero-title">Academic Hub X</h1>
+        <p class="hero-subtitle">
+          Organize, manage, and access your academic files with intelligent categorization and seamless sync
+        </p>
+        <div class="cta-buttons">
+          <a href="#auth" class="cta-primary" onclick="showAuth()">Get Started</a>
+          <a href="#features" class="cta-secondary">Learn More</a>
         </div>
-        <div class="space-y-3">
-          <label class="block text-sm">Subject</label>
-          <select id="uploadSubject" class="input"></select>
+      </div>
+    </section>
+  </div>
 
-          <label class="block text-sm">Choose file(s)</label>
-          <input id="uploadFiles" type="file" accept="application/pdf" multiple class="input-file"/>
+  <!-- Features Section -->
+  <section id="features" class="features-section">
+    <div class="container mx-auto">
+      <h2 class="text-4xl font-bold text-center mb-4 text-gray-800">Why Choose Academic Hub X?</h2>
+      <p class="text-xl text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+        Experience the future of academic file management with our advanced features
+      </p>
+      
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon text-white">📚</div>
+          <h3 class="text-xl font-bold mb-2">Smart Organization</h3>
+          <p class="text-gray-600">Automatically categorize files by subjects with intelligent tagging and search capabilities.</p>
+        </div>
+        
+        <div class="feature-card">
+          <div class="feature-icon text-white">☁️</div>
+          <h3 class="text-xl font-bold mb-2">Cloud Sync</h3>
+          <p class="text-gray-600">Seamless synchronization across all devices with Supabase backend integration.</p>
+        </div>
+        
+        <div class="feature-card">
+          <div class="feature-icon text-white">🔒</div>
+          <h3 class="text-xl font-bold mb-2">Secure Storage</h3>
+          <p class="text-gray-600">Enterprise-grade security with encryption and secure authentication methods.</p>
+        </div>
+        
+        <div class="feature-card">
+          <div class="feature-icon text-white">📱</div>
+          <h3 class="text-xl font-bold mb-2">PWA Ready</h3>
+          <p class="text-gray-600">Install as a native app on any device with offline capabilities and push notifications.</p>
+        </div>
+        
+        <div class="feature-card">
+          <div class="feature-icon text-white">🎨</div>
+          <h3 class="text-xl font-bold mb-2">Beautiful UI</h3>
+          <p class="text-gray-600">Figma-inspired design with smooth animations and intuitive user experience.</p>
+        </div>
+        
+        <div class="feature-card">
+          <div class="feature-icon text-white">⚡</div>
+          <h3 class="text-xl font-bold mb-2">Lightning Fast</h3>
+          <p class="text-gray-600">Optimized performance with IndexedDB caching and smart loading strategies.</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
-          <div class="flex justify-end gap-2 pt-2">
-            <button class="btn" onclick="AHX.ui.closeUpload()">Cancel</button>
-            <button class="btn-primary" onclick="AHX.files.saveUploads()">Save</button>
+  <!-- Auth Modal -->
+  <div id="auth" class="modal hidden">
+    <div class="modal-backdrop" onclick="hideAuth()"></div>
+    <div class="modal-panel animate-pop max-w-md mx-auto">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">Welcome Back</h2>
+        <button onclick="hideAuth()" class="icon-btn">×</button>
+      </div>
+      
+      <div class="flex gap-2 mb-6">
+        <button id="tabSignIn" class="btn-primary !py-3 flex-1 rounded-xl">Sign In</button>
+        <button id="tabSignUp" class="btn !py-3 flex-1 rounded-xl">Sign Up</button>
+      </div>
+
+      <!-- Sign In Form -->
+      <form id="formSignIn" onsubmit="return AHX.auth.signIn(event)" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+          <input id="si_email" class="input" type="email" placeholder="Enter your email" required>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+          <input id="si_pass" class="input" type="password" placeholder="Enter password (or leave empty for magic link)">
+        </div>
+        <div class="flex gap-3">
+          <button type="submit" class="btn-primary flex-1 !py-3">Sign In</button>
+          <button type="button" class="btn !py-3" onclick="AHX.auth.signInWithMagic()">Magic Link</button>
+        </div>
+        <div class="text-center">
+          <p class="text-xs text-gray-500">Demo: demo@ahx.app / 1234</p>
+        </div>
+      </form>
+
+      <!-- Sign Up Form -->
+      <form id="formSignUp" class="hidden space-y-4" onsubmit="return AHX.auth.signUp(event)">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+          <input id="su_name" class="input" type="text" placeholder="Enter your full name">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+          <input id="su_email" class="input" type="email" placeholder="Enter your email" required>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+          <input id="su_pass" class="input" type="password" placeholder="Create password (or leave empty)">
+        </div>
+        <button type="submit" class="btn-primary w-full !py-3">Create Account</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Main App Container -->
+  <div id="app" class="hidden min-h-screen bg-gray-50">
+    <!-- Top Navigation -->
+    <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <div class="flex items-center">
+            <div class="brand mr-4">AHX</div>
+            <nav class="hidden md:flex space-x-8">
+              <a href="#/dashboard" class="nav-link">Dashboard</a>
+              <a href="#/search" class="nav-link">Search</a>
+              <a href="#/settings" class="nav-link">Settings</a>
+            </nav>
+          </div>
+          
+          <div class="flex items-center space-x-4">
+            <button id="themeBtn" class="icon-btn" title="Toggle theme">🌓</button>
+            <button id="installBtn" class="btn hidden">Install App</button>
+            <span id="userTag" class="badge">Guest</span>
+            <button id="logoutBtn" class="btn-danger hidden">Logout</button>
           </div>
         </div>
       </div>
-      <div class="modal-backdrop" onclick="AHX.ui.closeUpload()"></div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <div id="viewRoot" class="px-4 py-6 sm:px-0"></div>
+    </main>
+
+    <!-- Floating Action Button -->
+    <button id="fab" class="fab hidden" title="Upload Files" onclick="AHX.ui.openUpload()">
+      <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Upload Modal -->
+  <div id="uploadModal" class="modal hidden">
+    <div class="modal-backdrop" onclick="AHX.ui.closeUpload()"></div>
+    <div class="modal-panel animate-pop">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-xl font-bold text-gray-800">Upload Files</h3>
+        <button onclick="AHX.ui.closeUpload()" class="icon-btn">×</button>
+      </div>
+      
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+          <select id="uploadSubject" class="input">
+            <option value="">Select a subject...</option>
+          </select>
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Files</label>
+          <input id="uploadFiles" class="input-file" type="file" accept="application/pdf,image/*,.doc,.docx" multiple>
+          <p class="text-xs text-gray-500 mt-2">Supports PDF, images, and documents</p>
+        </div>
+        
+        <div class="flex gap-3 justify-end">
+          <button class="btn" onclick="AHX.ui.closeUpload()">Cancel</button>
+          <button class="btn-primary" onclick="AHX.files.saveUploads()">Upload Files</button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Auth Portal -->
-  <div id="auth" class="hidden min-h-screen grid place-items-center p-4">
-    <div class="card w-full max-w-sm animate-pop px-5 py-6">
-      <div class="flex flex-col items-center">
-        <img src="assets/icon-192.png" class="w-14 h-14 rounded-xl mb-2" alt="AHX">
-        <h2 class="text-xl font-semibold">Academic Hub X</h2>
-        <p class="text-xs text-gray-500">organize • study • offline</p>
-      </div>
-
-      <div class="mt-5 grid grid-cols-2 gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
-        <button id="tabSignIn" class="btn-primary !py-2 rounded-lg">Sign in</button>
-        <button id="tabSignUp" class="btn !py-2 rounded-lg">Sign up</button>
-      </div>
-
-      <!-- Sign In -->
-      <form id="formSignIn" class="mt-5 space-y-3" onsubmit="return AHX.auth.signIn(event)">
-        <input id="si_email" type="email" class="input" placeholder="Email" required>
-        <input id="si_pass" type="password" class="input" placeholder="Password (leave empty for magic link)">
-        <div class="flex gap-2">
-          <button class="btn-primary w-full">Continue</button>
-        </div>
-        <p class="text-xs text-gray-500 text-center">Tip: use <b>demo@ahx.app</b> / <b>1234</b> for quick entry</p>
-
-        <div class="mt-2 flex justify-center gap-2">
-          <button type="button" class="btn" onclick="AHX.auth.signInWithMagicPrompt()">Send Magic Link</button>
-          <button type="button" class="btn" onclick="AHX.auth.signInWithOAuth('google')">Sign in with Google</button>
-        </div>
-      </form>
-
-      <!-- Sign Up -->
-      <form id="formSignUp" class="hidden mt-5 space-y-3" onsubmit="return AHX.auth.signUpSubmit(event)">
-        <input id="su_name" type="text" class="input" placeholder="Full name">
-        <input id="su_email" type="email" class="input" placeholder="Email" required>
-        <input id="su_pass" type="password" class="input" placeholder="Password (min 4)">
-        <div class="flex gap-2">
-          <button class="btn-primary w-full">Create account</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <script type="module" src="app.js"></script>
+  <script>
+    function showAuth() {
+      document.getElementById('auth').classList.remove('hidden');
+      document.getElementById('landing').style.display = 'none';
+    }
+    
+    function hideAuth() {
+      document.getElementById('auth').classList.add('hidden');
+      document.getElementById('landing').style.display = 'block';
+    }
+    
+    // Smooth scroll for anchor links
+    document.addEventListener('click', function(e) {
+      if (e.target.getAttribute('href')?.startsWith('#features')) {
+        e.preventDefault();
+        document.getElementById('features').scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+  </script>
 </body>
 </html>
