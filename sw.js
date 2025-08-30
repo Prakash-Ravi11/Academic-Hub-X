@@ -1,35 +1,30 @@
-const CACHE_NAME = 'ahx-shell-v1';
-const CORE_ASSETS = [
+const CACHE_NAME = 'ahx-cache-v1';
+const urlsToCache = [
   '/',
   '/index.html',
-  '/style.css',
   '/app.js',
-  '/manifest.webmanifest',
+  '/style.css',
   '/subjects.json',
-  '/assets/icon-192.png',
-  '/assets/icon-512.png'
+  '/icon-192.png',
+  '/icon-512.png',
+  '/manifest.webmanifest'
 ];
 
-self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(CORE_ASSETS)));
-  self.skipWaiting();
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(urlsToCache))
+      .catch(err => console.error('Cache open failed:', err))
+  );
 });
 
-self.addEventListener('activate', (e) => {
-  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))));
-  self.clients.claim();
-});
-
-self.addEventListener('fetch', (e) => {
-  const req = e.request;
-  const url = new URL(req.url);
-  if (url.pathname.endsWith('.json') || url.pathname.startsWith('/api/')) {
-    e.respondWith(fetch(req).then(r=>{ const c=r.clone(); caches.open(CACHE_NAME).then(cache=>cache.put(req,c)); return r; }).catch(()=>caches.match(req)));
-    return;
-  }
-  if (req.mode === 'navigate' || (req.headers.get('accept')||'').includes('text/html')) {
-    e.respondWith(fetch(req).then(r=>{ caches.open(CACHE_NAME).then(c=>c.put(req,r.clone())); return r; }).catch(()=>caches.match('/index.html')));
-    return;
-  }
-  e.respondWith(caches.match(req).then(r => r || fetch(req).then(networkRes => { if (['script','style','image'].includes(req.destination)) { caches.open(CACHE_NAME).then(c=>c.put(req, networkRes.clone())); } return networkRes; })));
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request)
+      .then(response => response || fetch(event.request))
+      .catch(err => {
+        console.error('Fetch failed:', err);
+        return new Response('Offline');
+      })
+  );
 });
