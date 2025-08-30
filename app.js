@@ -3,8 +3,292 @@
 // Config
 const SUPABASE_URL = 'https://yvlspahwnnzfctqqlmbu.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2bHNwYWh3bm56ZmN0cXFsbWJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNjQ4NzUsImV4cCI6MjA2OTk0MDg3NX0.5j6phM4WCe7XZo5xHdajwAShkV-hibECc_sp31JI6SQ';
-const DEMO_USER_EMAIL = 'demo@ahx.app';
-const DEMO_USER_PASS = '1234';
+// Enhanced authentication with better error handling
+async function handleSignIn(event) {
+  event.preventDefault();
+  const email = document.getElementById('signin-email').value;
+  const password = document.getElementById('signin-password').value;
+  
+  setLoading('signin', true);
+  clearMessages();
+  
+  try {
+    // Check internet connectivity first
+    if (!navigator.onLine) {
+      throw new Error('No internet connection. Please check your network and try again.');
+    }
+    
+    // Validate Supabase configuration
+    if (!supabase) {
+      throw new Error('Authentication service not configured properly.');
+    }
+    
+    // Validate inputs
+    if (!email || !password) {
+      throw new Error('Please enter both email and password.');
+    }
+    
+    if (!isValidEmail(email)) {
+      throw new Error('Please enter a valid email address.');
+    }
+    
+    // Attempt sign in with timeout
+    const signInPromise = supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password: password
+    });
+    
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Request timed out. Please try again.')), 15000)
+    );
+    
+    const { data, error } = await Promise.race([signInPromise, timeoutPromise]);
+    
+    if (error) {
+      // Handle specific Supabase errors
+      switch (error.message) {
+        case 'Invalid login credentials':
+          throw new Error('Incorrect email or password. Please try again.');
+        case 'Email not confirmed':
+          throw new Error('Please check your email and confirm your account first.');
+        case 'Too many requests':
+          throw new Error('Too many login attempts. Please wait a few minutes.');
+        default:
+          throw new Error(error.message || 'Failed to sign in. Please try again.');
+      }
+    }
+    
+    if (data?.user) {
+      // Store user data safely
+      const userData = {
+        id: data.user.id,
+        email: data.user.email,
+        name: data.user.user_metadata?.full_name || data.user.email.split('@')[0],
+        avatar: data.user.user_metadata?.avatar_url || null
+      };
+      
+      try {
+        localStorage.setItem('ahx_user', JSON.stringify(userData));
+        localStorage.setItem('ahx_session', JSON.stringify(data.session));
+      } catch (storageError) {
+        console.warn('Failed to store user data locally:', storageError);
+      }
+      
+      showSuccess('Welcome back! Redirecting to dashboard...');
+      
+      // Redirect after success message
+      setTimeout(() => {
+        window.location.href = 'app.html';
+      }, 1500);
+    } else {
+      throw new Error('Authentication failed. Please try again.');
+    }
+    
+  } catch (error) {
+    console.error('Sign in error:', error);
+    
+    // Show user-friendly error messages
+    if (error.message.includes('fetch')) {
+      showError('Network error. Please check your internet connection and try again.');
+    } else if (error.message.includes('JSON')) {
+      showError('Service temporarily unavailable. Please try again in a few moments.');
+    } else {
+      showError(error.message || 'Sign in failed. Please try again.');
+    }
+  } finally {
+    setLoading('signin', false);
+  }
+}
+
+// Email validation helper
+function isValidEmail(email) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+// Enhanced sign up function
+async function handleSignUp(event) {
+  event.preventDefault();
+  const name = document.getElementById('signup-name').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  const password = document.getElementById('signup-password').value;
+  
+  setLoading('signup', true);
+  clearMessages();
+  
+  try {
+    // Validation checks
+    if (!navigator.onLine) {
+      throw new Error('No internet connection. Please check your network and try again.');
+    }
+    
+    if (!supabase) {
+      throw new Error('Authentication service not configured properly.');
+    }
+    
+    if (!name || !email || !password) {
+      throw new Error('Please fill in all required fields.');
+    }
+    
+    if (!isValidEmail(email)) {
+      throw new Error('Please enter a valid email address.');
+    }
+    
+    if (password.length < 6) {
+      throw new Error('Password must be at least 6 characters long.');
+    }
+    
+    // Attempt sign up with timeout
+    const signUpPromise = supabase.auth.signUp({
+      email: email,
+      password: password,
+      options: {
+        data: {
+          full_name: name
+        }
+      }
+    });
+    
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Request timed out. Please try again.')), 15000)
+    );
+    
+    const { data, error } = await Promise.race([signUpPromise, timeoutPromise]);
+    
+    if (error) {
+      switch (error.message) {
+        case 'User already registered':
+          throw new Error('An account with this email already exists. Please sign in instead.');
+        case 'Password should be at least 6 characters':
+          throw new Error('Password must be at least 6 characters long.');
+        default:
+          throw new Error(error.message || 'Failed to create account. Please try again.');
+      }
+    }
+    
+    if (data?.user) {
+      if (data.user.email_confirmed_at) {
+        // Email already confirmed, redirect to app
+        showSuccess('Account created successfully! Redirecting...');
+        setTimeout(() => {
+          window.location.href = 'app.html';
+        }, 1500);
+      } else {
+        // Email confirmation required
+        showSuccess('Account created! Please check your email and click the confirmation link before signing in.');
+        setTimeout(() => {
+          switchTab('signin');
+        }, 3000);
+      }
+    } else {
+      throw new Error('Account creation failed. Please try again.');
+    }
+    
+  } catch (error) {
+    console.error('Sign up error:', error);
+    
+    if (error.message.includes('fetch')) {
+      showError('Network error. Please check your internet connection and try again.');
+    } else if (error.message.includes('JSON')) {
+      showError('Service temporarily unavailable. Please try again in a few moments.');
+    } else {
+      showError(error.message || 'Sign up failed. Please try again.');
+    }
+  } finally {
+    setLoading('signup', false);
+  }
+}
+
+// Network status detection
+window.addEventListener('online', () => {
+  clearMessages();
+  showSuccess('Connection restored!');
+});
+
+window.addEventListener('offline', () => {
+  showError('You are offline. Please check your internet connection.');
+});
+
+// Enhanced Supabase initialization with error handling
+let supabase = null;
+try {
+  if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true
+      }
+    });
+    
+    // Test connection
+    supabase.auth.getSession().catch(error => {
+      console.warn('Supabase connection test failed:', error);
+    });
+  }
+} catch (error) {
+  console.error('Failed to initialize Supabase:', error);
+}
+
+// OAuth functions with better error handling
+async function signInWithGoogle() {
+  try {
+    if (!navigator.onLine) {
+      throw new Error('No internet connection available.');
+    }
+    
+    if (!supabase) {
+      throw new Error('Authentication service not available.');
+    }
+    
+    showSuccess('Redirecting to Google...');
+    
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/app.html`,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent'
+        }
+      }
+    });
+    
+    if (error) throw error;
+    
+  } catch (error) {
+    console.error('Google sign in error:', error);
+    showError(error.message || 'Google sign in failed. Please try again.');
+  }
+}
+
+async function signInWithGitHub() {
+  try {
+    if (!navigator.onLine) {
+      throw new Error('No internet connection available.');
+    }
+    
+    if (!supabase) {
+      throw new Error('Authentication service not available.');
+    }
+    
+    showSuccess('Redirecting to GitHub...');
+    
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'github',
+      options: {
+        redirectTo: `${window.location.origin}/app.html`
+      }
+    });
+    
+    if (error) throw error;
+    
+  } catch (error) {
+    console.error('GitHub sign in error:', error);
+    showError(error.message || 'GitHub sign in failed. Please try again.');
+  }
+}
+
 
 // Global namespace
 window.AHX = {
@@ -571,4 +855,5 @@ AHX.view.settings = () => AHX.util.html`
   <h2>Settings</h2>
   <button onclick="AHX.files.clearAll().then(() => alert('All files cleared'))">Clear all local files</button>
 `;
+
 
