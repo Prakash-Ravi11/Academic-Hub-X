@@ -8,10 +8,10 @@
   <link rel="icon" href="icon-192.png">
   <link rel="apple-touch-icon" href="icon-192.png">
   <meta name="theme-color" content="#007AFF">
+  <meta name="description" content="Modern PWA for academic file management with AI-powered organization">
   <link rel="stylesheet" href="style.css">
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script defer src="https://unpkg.com/html5-qrcode@2.3.8/minified/html5-qrcode.min.js"></script>
-  <script defer src="app.js"></script>
   <style>
     /* Apple-style Design System */
     :root {
@@ -189,48 +189,6 @@
       background: rgba(255,255,255,0.25);
       transform: translateY(-2px);
     }
-    <!-- Add network status indicator -->
-<div id="networkStatus" class="network-status" style="display: none;">
-  <div class="network-indicator offline">
-    <span>🔄</span> Reconnecting...
-  </div>
-</div>
-
-<style>
-.network-status {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 10000;
-}
-
-.network-indicator {
-  background: var(--warning);
-  color: white;
-  padding: 0.75rem 1rem;
-  border-radius: var(--radius-medium);
-  font-size: 0.9rem;
-  font-weight: 500;
-  box-shadow: var(--shadow-medium);
-  animation: slideInRight 0.3s ease;
-}
-
-.network-indicator.offline {
-  background: var(--danger);
-}
-
-@keyframes slideInRight {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-</style>
-
 
     /* Authentication Modal - Apple Style */
     .auth-modal {
@@ -261,10 +219,33 @@
       box-shadow: var(--shadow-heavy);
       transform: translateY(20px);
       transition: transform 0.3s ease;
+      position: relative;
     }
 
     .auth-modal.active .auth-panel {
       transform: translateY(0);
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--gray-500);
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: var(--transition);
+    }
+
+    .close-btn:hover {
+      background: var(--gray-100);
     }
 
     .auth-header {
@@ -525,15 +506,10 @@
     </div>
   </div>
 
-  <!-- Features Section (Your existing content) -->
-  <section id="features" class="features-section">
-    <!-- Keep your existing features grid here -->
-  </section>
-
   <!-- Authentication Modal -->
   <div id="authModal" class="auth-modal">
     <div class="auth-panel">
-      <button class="close-btn" onclick="closeAuth()" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer;">×</button>
+      <button class="close-btn" onclick="closeAuth()">×</button>
       
       <div class="auth-header">
         <h2 class="auth-title">Welcome to Academic Hub X</h2>
@@ -626,24 +602,52 @@
 
   <!-- App Container (Hidden Initially) -->
   <div id="app" style="display: none;">
-    <!-- Your app content goes here -->
+    <!-- Your app content will be loaded here after authentication -->
   </div>
 
   <script>
+    // Configuration - Replace with your actual Supabase credentials
+    const SUPABASE_URL = 'https://yvlspahwnnzfctqqlmbu.supabase.co';
+    const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2bHNwYWh3bm56ZmN0cXFsbWJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNjQ4NzUsImV4cCI6MjA2OTk0MDg3NX0.5j6phM4WCe7XZo5xHdajwAShkV-hibECc_sp31JI6SQ';
+
     // Global state
     let currentTab = 'signin';
     let qrScanner = null;
+    let supabase = null;
+
+    // Initialize Supabase with error handling
+    try {
+      if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+          auth: {
+            autoRefreshToken: true,
+            persistSession: true,
+            detectSessionInUrl: true
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Failed to initialize Supabase:', error);
+    }
 
     // Initialize app
     document.addEventListener('DOMContentLoaded', function() {
-      // Hide loading screen after 2 seconds
       setTimeout(() => {
-        document.getElementById('loadingScreen').style.opacity = '0';
-        setTimeout(() => {
-          document.getElementById('loadingScreen').style.display = 'none';
-        }, 500);
+        const loadingScreen = document.getElementById('loadingScreen');
+        if (loadingScreen) {
+          loadingScreen.style.opacity = '0';
+          setTimeout(() => {
+            loadingScreen.style.display = 'none';
+          }, 500);
+        }
       }, 2000);
     });
+
+    // Email validation helper
+    function isValidEmail(email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(email);
+    }
 
     // Auth modal functions
     function openAuth() {
@@ -657,11 +661,9 @@
     function switchTab(tab) {
       currentTab = tab;
       
-      // Update tab buttons
       document.querySelectorAll('.auth-tab').forEach(btn => btn.classList.remove('active'));
       event.target.classList.add('active');
       
-      // Switch forms
       if (tab === 'signin') {
         document.getElementById('signinForm').style.display = 'block';
         document.getElementById('signupForm').style.display = 'none';
@@ -708,7 +710,7 @@
       }
     }
 
-    // Authentication handlers
+    // Enhanced authentication handlers
     async function handleSignIn(event) {
       event.preventDefault();
       const email = document.getElementById('signin-email').value;
@@ -718,24 +720,80 @@
       clearMessages();
       
       try {
-        if (!supabase) {
-          throw new Error('Supabase not configured');
+        if (!navigator.onLine) {
+          throw new Error('No internet connection. Please check your network and try again.');
         }
         
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password
+        if (!supabase) {
+          throw new Error('Authentication service not configured properly.');
+        }
+        
+        if (!email || !password) {
+          throw new Error('Please enter both email and password.');
+        }
+        
+        if (!isValidEmail(email)) {
+          throw new Error('Please enter a valid email address.');
+        }
+        
+        const signInPromise = supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password: password
         });
         
-        if (error) throw error;
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Request timed out. Please try again.')), 15000)
+        );
         
-        showSuccess('Welcome back! Redirecting...');
-        setTimeout(() => {
-          window.location.href = 'app.html';
-        }, 1500);
+        const { data, error } = await Promise.race([signInPromise, timeoutPromise]);
+        
+        if (error) {
+          switch (error.message) {
+            case 'Invalid login credentials':
+              throw new Error('Incorrect email or password. Please try again.');
+            case 'Email not confirmed':
+              throw new Error('Please check your email and confirm your account first.');
+            case 'Too many requests':
+              throw new Error('Too many login attempts. Please wait a few minutes.');
+            default:
+              throw new Error(error.message || 'Failed to sign in. Please try again.');
+          }
+        }
+        
+        if (data?.user) {
+          const userData = {
+            id: data.user.id,
+            email: data.user.email,
+            name: data.user.user_metadata?.full_name || data.user.email.split('@')[0],
+            avatar: data.user.user_metadata?.avatar_url || null
+          };
+          
+          try {
+            localStorage.setItem('ahx_user', JSON.stringify(userData));
+            localStorage.setItem('ahx_session', JSON.stringify(data.session));
+          } catch (storageError) {
+            console.warn('Failed to store user data locally:', storageError);
+          }
+          
+          showSuccess('Welcome back! Redirecting to dashboard...');
+          
+          setTimeout(() => {
+            window.location.href = 'app.html';
+          }, 1500);
+        } else {
+          throw new Error('Authentication failed. Please try again.');
+        }
         
       } catch (error) {
-        showError(error.message || 'Failed to sign in');
+        console.error('Sign in error:', error);
+        
+        if (error.message.includes('fetch')) {
+          showError('Network error. Please check your internet connection and try again.');
+        } else if (error.message.includes('JSON')) {
+          showError('Service temporarily unavailable. Please try again in a few moments.');
+        } else {
+          showError(error.message || 'Sign in failed. Please try again.');
+        }
       } finally {
         setLoading('signin', false);
       }
@@ -743,21 +801,37 @@
 
     async function handleSignUp(event) {
       event.preventDefault();
-      const name = document.getElementById('signup-name').value;
-      const email = document.getElementById('signup-email').value;
+      const name = document.getElementById('signup-name').value.trim();
+      const email = document.getElementById('signup-email').value.trim();
       const password = document.getElementById('signup-password').value;
       
       setLoading('signup', true);
       clearMessages();
       
       try {
-        if (!supabase) {
-          throw new Error('Supabase not configured');
+        if (!navigator.onLine) {
+          throw new Error('No internet connection. Please check your network and try again.');
         }
         
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
+        if (!supabase) {
+          throw new Error('Authentication service not configured properly.');
+        }
+        
+        if (!name || !email || !password) {
+          throw new Error('Please fill in all required fields.');
+        }
+        
+        if (!isValidEmail(email)) {
+          throw new Error('Please enter a valid email address.');
+        }
+        
+        if (password.length < 6) {
+          throw new Error('Password must be at least 6 characters long.');
+        }
+        
+        const signUpPromise = supabase.auth.signUp({
+          email: email,
+          password: password,
           options: {
             data: {
               full_name: name
@@ -765,12 +839,49 @@
           }
         });
         
-        if (error) throw error;
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Request timed out. Please try again.')), 15000)
+        );
         
-        showSuccess('Account created! Please check your email to verify your account.');
+        const { data, error } = await Promise.race([signUpPromise, timeoutPromise]);
+        
+        if (error) {
+          switch (error.message) {
+            case 'User already registered':
+              throw new Error('An account with this email already exists. Please sign in instead.');
+            case 'Password should be at least 6 characters':
+              throw new Error('Password must be at least 6 characters long.');
+            default:
+              throw new Error(error.message || 'Failed to create account. Please try again.');
+          }
+        }
+        
+        if (data?.user) {
+          if (data.user.email_confirmed_at) {
+            showSuccess('Account created successfully! Redirecting...');
+            setTimeout(() => {
+              window.location.href = 'app.html';
+            }, 1500);
+          } else {
+            showSuccess('Account created! Please check your email and click the confirmation link before signing in.');
+            setTimeout(() => {
+              switchTab('signin');
+            }, 3000);
+          }
+        } else {
+          throw new Error('Account creation failed. Please try again.');
+        }
         
       } catch (error) {
-        showError(error.message || 'Failed to create account');
+        console.error('Sign up error:', error);
+        
+        if (error.message.includes('fetch')) {
+          showError('Network error. Please check your internet connection and try again.');
+        } else if (error.message.includes('JSON')) {
+          showError('Service temporarily unavailable. Please try again in a few moments.');
+        } else {
+          showError(error.message || 'Sign up failed. Please try again.');
+        }
       } finally {
         setLoading('signup', false);
       }
@@ -778,41 +889,59 @@
 
     async function signInWithGoogle() {
       try {
-        if (!supabase) {
-          throw new Error('Supabase not configured');
+        if (!navigator.onLine) {
+          throw new Error('No internet connection available.');
         }
+        
+        if (!supabase) {
+          throw new Error('Authentication service not available.');
+        }
+        
+        showSuccess('Redirecting to Google...');
         
         const { error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
-            redirectTo: window.location.origin + '/app.html'
+            redirectTo: `${window.location.origin}/app.html`,
+            queryParams: {
+              access_type: 'offline',
+              prompt: 'consent'
+            }
           }
         });
         
         if (error) throw error;
         
       } catch (error) {
-        showError(error.message || 'Failed to sign in with Google');
+        console.error('Google sign in error:', error);
+        showError(error.message || 'Google sign in failed. Please try again.');
       }
     }
 
     async function signInWithGitHub() {
       try {
-        if (!supabase) {
-          throw new Error('Supabase not configured');
+        if (!navigator.onLine) {
+          throw new Error('No internet connection available.');
         }
+        
+        if (!supabase) {
+          throw new Error('Authentication service not available.');
+        }
+        
+        showSuccess('Redirecting to GitHub...');
         
         const { error } = await supabase.auth.signInWithOAuth({
           provider: 'github',
           options: {
-            redirectTo: window.location.origin + '/app.html'
+            redirectTo: `${window.location.origin}/app.html`
           }
         });
         
         if (error) throw error;
         
       } catch (error) {
-        showError(error.message || 'Failed to sign in with GitHub');
+        console.error('GitHub sign in error:', error);
+        showError(error.message || 'GitHub sign in failed. Please try again.');
       }
     }
 
@@ -820,26 +949,30 @@
     function openQRScanner() {
       document.getElementById('qrModal').classList.add('active');
       
-      qrScanner = new Html5Qrcode("qr-reader");
-      
-      qrScanner.start(
-        { facingMode: "environment" },
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 }
-        },
-        (decodedText, decodedResult) => {
-          console.log('QR Code detected:', decodedText);
-          handleQRResult(decodedText);
-          closeQRScanner();
-        },
-        (errorMessage) => {
-          // Handle scan error
-        }
-      ).catch(err => {
-        console.error('QR Scanner error:', err);
-        showError('Camera access denied or not available');
-      });
+      if (typeof Html5Qrcode !== 'undefined') {
+        qrScanner = new Html5Qrcode("qr-reader");
+        
+        qrScanner.start(
+          { facingMode: "environment" },
+          {
+            fps: 10,
+            qrbox: { width: 250, height: 250 }
+          },
+          (decodedText, decodedResult) => {
+            console.log('QR Code detected:', decodedText);
+            handleQRResult(decodedText);
+            closeQRScanner();
+          },
+          (errorMessage) => {
+            // Handle scan error silently
+          }
+        ).catch(err => {
+          console.error('QR Scanner error:', err);
+          showError('Camera access denied or not available');
+        });
+      } else {
+        showError('QR Scanner not available');
+      }
     }
 
     function closeQRScanner() {
@@ -855,11 +988,9 @@
 
     function handleQRResult(qrData) {
       try {
-        // Parse QR data (assuming it's a URL or JSON with file info)
         let fileInfo;
         
         if (qrData.startsWith('http')) {
-          // It's a URL - fetch the content
           fileInfo = {
             name: 'Scanned Notes',
             url: qrData,
@@ -867,12 +998,14 @@
             scannedAt: Date.now()
           };
         } else {
-          // Try to parse as JSON
           fileInfo = JSON.parse(qrData);
         }
         
-        // Store in IndexedDB
-        AHX.files.addScannedFile(fileInfo);
+        // Store in localStorage temporarily (would normally go to IndexedDB)
+        const scannedFiles = JSON.parse(localStorage.getItem('scanned_files') || '[]');
+        scannedFiles.push(fileInfo);
+        localStorage.setItem('scanned_files', JSON.stringify(scannedFiles));
+        
         showSuccess('Notes scanned and saved successfully!');
         
       } catch (error) {
@@ -881,11 +1014,21 @@
       }
     }
 
+    // Network status handling
+    window.addEventListener('online', () => {
+      clearMessages();
+      showSuccess('Connection restored!');
+    });
+
+    window.addEventListener('offline', () => {
+      showError('You are offline. Please check your internet connection.');
+    });
+
     // Smooth scrolling for anchor links
     document.addEventListener('click', function(e) {
       if (e.target.getAttribute('href') === '#features') {
         e.preventDefault();
-        document.getElementById('features').scrollIntoView({ 
+        document.getElementById('features')?.scrollIntoView({ 
           behavior: 'smooth' 
         });
       }
@@ -893,4 +1036,3 @@
   </script>
 </body>
 </html>
-
