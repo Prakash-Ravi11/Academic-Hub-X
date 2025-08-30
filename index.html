@@ -2304,6 +2304,27 @@
         resultsContainer.innerHTML = '<div class="error-state">Search failed. Please try again.</div>';
       }
     }
+    function finalizeSetup() {
+  // FIXED: Enhanced network monitoring to prevent "Offline" JSON errors
+  window.addEventListener('online', () => {
+    AHX.state.isOnline = true;
+    showNotification('Internet connection restored! 🌐', 'success', 3000);
+  });
+  
+  window.addEventListener('offline', () => {
+    AHX.state.isOnline = false;
+    showNotification('You are offline. Authentication features will be limited. 📱', 'warning', 8000);
+  });
+  
+  // Load saved theme
+  const savedTheme = localStorage.getItem('ahx_theme');
+  if (savedTheme === 'dark') {
+    document.documentElement.classList.add('dark');
+  }
+  
+  // Rest of your existing finalizeSetup code...
+}
+
 
     // =================== UTILITY FUNCTIONS ===================
     function generateId() {
@@ -2605,5 +2626,6 @@
   </script>
 </body>
 </html>
+
 
 
