@@ -1,88 +1,169 @@
 /* 
  * Academic Hub X - Complete Application Logic
- * Enhanced with robust error handling, QR scanning, and production-ready features
+ * Production-ready with robust error handling, offline support, and QR integration
  */
 
 // =================== CONFIGURATION ===================
 const SUPABASE_URL = 'https://yvlspahwnnzfctqqlmbu.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2bHNwYWh3bm56ZmN0cXFsbWJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNjQ4NzUsImV4cCI6MjA2OTk0MDg3NX0.5j6phM4WCe7XZo5xHdajwAShkV-hibECc_sp31JI6SQ';
 
-// Constants
-const APP_NAME = 'Academic Hub X';
-const DB_NAME = 'ahx_db';
-const DB_VERSION = 3;
-const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+const APP_CONFIG = {
+  name: 'Academic Hub X',
+  version: '1.0.0',
+  dbName: 'ahx_db',
+  dbVersion: 3,
+  maxFileSize: 50 * 1024 * 1024, // 50MB
+  allowedTypes: ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'txt', 'jpg', 'png', 'gif'],
+  defaultSubjects: [
+    { key: 'math', name: 'Mathematics', code: 'MATH', icon: '🔢' },
+    { key: 'science', name: 'Science', code: 'SCI', icon: '🔬' },
+    { key: 'english', name: 'English', code: 'ENG', icon: '📚' },
+    { key: 'history', name: 'History', code: 'HIST', icon: '📜' },
+    { key: 'scanned', name: 'Scanned Notes', code: 'SCAN', icon: '📷' }
+  ]
+};
 
 // =================== GLOBAL NAMESPACE ===================
 window.AHX = {
   state: {
-    subjects: [],
+    subjects: [...APP_CONFIG.defaultSubjects],
     db: null,
     user: null,
     theme: 'light',
     isOnline: navigator.onLine,
-    lastSync: null,
-    settings: {
-      autoSync: true,
-      notifications: true,
-      maxFileSize: 50 * 1024 * 1024, // 50MB
-      allowedTypes: ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'txt', 'jpg', 'png']
-    }
+    currentRoute: null,
+    isInitialized: false
   },
   util: {},
   auth: {},
   files: {},
   ui: {},
   view: {},
-  sync: {},
-  qr: {},
-  analytics: {}
+  qr: {}
 };
 
-// =================== SUPABASE INITIALIZATION ===================
 let supabase = null;
-let deferredPrompt = null;
 
-try {
-  if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
-      auth: {
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: true,
-        flowType: 'pkce'
-      },
-      global: {
-        headers: {
-          'X-Client-Info': `${APP_NAME}/1.0.0`
-        }
-      }
-    });
+// =================== INITIALIZATION ===================
+document.addEventListener('DOMContentLoaded', initializeApp);
+
+async function initializeApp() {
+  try {
+    console.log('Initializing Academic Hub X...');
     
-    // Test connection
-    supabase.auth.getSession().catch(error => {
-      console.warn('Supabase connection test failed:', error);
-    });
+    // Check authentication first
+    const user = AHX.auth.current();
+    if (!user) {
+      window.location.href = 'index.html';
+      return;
+    }
+    
+    AHX.state.user = user;
+    updateUserDisplay();
+    
+    // Initialize Supabase with timeout
+    await initializeSupabase();
+    
+    // Initialize IndexedDB
+    await initializeDatabase();
+    
+    // Setup UI event listeners
+    setupEventListeners();
+    
+    // Initialize routing
+    setupRouting();
+    
+    // Load subjects from file
+    await loadSubjects();
+    
+    // Setup drag and drop
+    setupDragAndDrop();
+    
+    // Network status monitoring
+    setupNetworkMonitoring();
+    
+    // Mark as initialized
+    AHX.state.isInitialized = true;
+    
+    // Initial render
+    await AHX.view.render();
+    
+    console.log('Academic Hub X initialized successfully');
+    
+  } catch (error) {
+    console.error('App initialization failed:', error);
+    AHX.ui.showNotification('Failed to initialize app. Some features may be unavailable.', 'error');
+    
+    // Still try to render basic UI
+    try {
+      await AHX.view.render();
+    } catch (renderError) {
+      console.error('Emergency render failed:', renderError);
+      document.getElementById('viewRoot').innerHTML = `
+        <div class="error-state">
+          <h2>App Failed to Load</h2>
+          <p>Please refresh the page or check your connection.</p>
+          <button class="btn btn-primary" onclick="location.reload()">Refresh Page</button>
+        </div>
+      `;
+    }
   }
-} catch (error) {
-  console.error('Failed to initialize Supabase:', error);
 }
 
-// =================== PWA INSTALL PROMPT ===================
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  const btn = document.getElementById('installBtn');
-  if (btn) btn.classList.remove('hidden');
-});
+async function initializeSupabase() {
+  try {
+    if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+        auth: {
+          autoRefreshToken: true,
+          persistSession: true,
+          detectSessionInUrl: false // Prevent URL parsing errors
+        }
+      });
+      console.log('Supabase initialized');
+    }
+  } catch (error) {
+    console.warn('Supabase initialization failed:', error);
+  }
+}
 
-window.addEventListener('appinstalled', () => {
-  console.log('PWA installed successfully');
-  deferredPrompt = null;
-  AHX.analytics.track('app_installed');
-});
+async function initializeDatabase() {
+  try {
+    AHX.state.db = await AHX.files.openDB();
+    console.log('IndexedDB initialized');
+  } catch (error) {
+    console.error('IndexedDB initialization failed:', error);
+    AHX.ui.showNotification('Local storage unavailable. Files will not persist.', 'warning');
+  }
+}
 
-// =================== UTILITIES PIPELINE ===================
+// =================== AUTHENTICATION ===================
+AHX.auth.current = () => {
+  try {
+    const raw = localStorage.getItem('ahx_user');
+    return raw ? JSON.parse(raw) : null;
+  } catch (error) {
+    console.warn('Failed to parse user data:', error);
+    localStorage.removeItem('ahx_user');
+    return null;
+  }
+};
+
+AHX.auth.signOut = async () => {
+  try {
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
+  } catch (error) {
+    console.warn('Supabase signout failed:', error);
+  } finally {
+    localStorage.removeItem('ahx_user');
+    localStorage.removeItem('ahx_session');
+    window.location.href = 'index.html';
+  }
+};
+
+// =================== UTILITIES ===================
 AHX.util.html = (strings, ...vals) => strings.reduce((acc, s, i) => acc + s + (vals[i] ?? ''), '');
 
 AHX.util.bytes = (bytes) => {
@@ -118,10 +199,6 @@ AHX.util.debounce = (func, wait) => {
   };
 };
 
-AHX.util.sanitizeFileName = (name) => {
-  return name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-};
-
 AHX.util.generateId = () => {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
 };
@@ -129,158 +206,25 @@ AHX.util.generateId = () => {
 AHX.util.validateFile = (file) => {
   const errors = [];
   
-  if (file.size > AHX.state.settings.maxFileSize) {
-    errors.push(`File size exceeds ${AHX.util.bytes(AHX.state.settings.maxFileSize)} limit`);
+  if (file.size > APP_CONFIG.maxFileSize) {
+    errors.push(`File size exceeds ${AHX.util.bytes(APP_CONFIG.maxFileSize)} limit`);
   }
   
   const extension = file.name.split('.').pop()?.toLowerCase();
-  if (extension && !AHX.state.settings.allowedTypes.includes(extension)) {
+  if (extension && !APP_CONFIG.allowedTypes.includes(extension)) {
     errors.push(`File type .${extension} is not allowed`);
   }
   
   return errors;
 };
 
-// =================== ERROR HANDLING ===================
-AHX.util.handleError = (error, context = '') => {
-  console.error(`Error in ${context}:`, error);
-  
-  let userMessage = 'An unexpected error occurred';
-  
-  if (!navigator.onLine) {
-    userMessage = 'No internet connection. Please check your network.';
-  } else if (error.message?.includes('fetch')) {
-    userMessage = 'Network error. Please try again.';
-  } else if (error.message?.includes('JSON')) {
-    userMessage = 'Service temporarily unavailable. Please try again later.';
-  } else if (error.message) {
-    userMessage = error.message;
-  }
-  
-  AHX.ui.showNotification(userMessage, 'error');
-  AHX.analytics.track('error_occurred', { context, error: error.message });
-};
-
-// =================== AUTHENTICATION PIPELINE ===================
-AHX.auth.current = () => {
-  try {
-    const raw = localStorage.getItem('ahx_user');
-    return raw ? JSON.parse(raw) : null;
-  } catch (error) {
-    console.warn('Failed to parse stored user data:', error);
-    localStorage.removeItem('ahx_user');
-    return null;
-  }
-};
-
-AHX.auth.getSession = async () => {
-  try {
-    if (!supabase) return null;
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (error) throw error;
-    return session;
-  } catch (error) {
-    console.warn('Failed to get session:', error);
-    return null;
-  }
-};
-
-AHX.auth.signIn = async (email, password) => {
-  try {
-    if (!supabase) throw new Error('Authentication service not available');
-    if (!navigator.onLine) throw new Error('No internet connection');
-    
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password
-    });
-    
-    if (error) throw error;
-    
-    if (data?.user) {
-      const userData = {
-        id: data.user.id,
-        email: data.user.email,
-        name: data.user.user_metadata?.full_name || data.user.email.split('@')[0],
-        avatar: data.user.user_metadata?.avatar_url,
-        created_at: data.user.created_at
-      };
-      
-      localStorage.setItem('ahx_user', JSON.stringify(userData));
-      AHX.state.user = userData;
-      
-      AHX.analytics.track('user_signed_in');
-      return { success: true, user: userData };
-    }
-    
-    throw new Error('Authentication failed');
-  } catch (error) {
-    AHX.util.handleError(error, 'signIn');
-    return { success: false, error: error.message };
-  }
-};
-
-AHX.auth.signUp = async (name, email, password) => {
-  try {
-    if (!supabase) throw new Error('Authentication service not available');
-    if (!navigator.onLine) throw new Error('No internet connection');
-    
-    const { data, error } = await supabase.auth.signUp({
-      email: email.trim(),
-      password,
-      options: {
-        data: { full_name: name.trim() }
-      }
-    });
-    
-    if (error) throw error;
-    
-    AHX.analytics.track('user_signed_up');
-    return { success: true, data };
-  } catch (error) {
-    AHX.util.handleError(error, 'signUp');
-    return { success: false, error: error.message };
-  }
-};
-
-AHX.auth.signOut = async () => {
-  try {
-    if (supabase) await supabase.auth.signOut();
-  } catch (error) {
-    console.warn('Supabase signout failed:', error);
-  } finally {
-    localStorage.removeItem('ahx_user');
-    localStorage.removeItem('ahx_session');
-    AHX.state.user = null;
-    AHX.analytics.track('user_signed_out');
-    window.location.href = 'index.html';
-  }
-};
-
-AHX.auth.resetPassword = async (email) => {
-  try {
-    if (!supabase) throw new Error('Authentication service not available');
-    
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password.html`
-    });
-    
-    if (error) throw error;
-    return { success: true };
-  } catch (error) {
-    AHX.util.handleError(error, 'resetPassword');
-    return { success: false, error: error.message };
-  }
-};
-
-// =================== DATABASE PIPELINE ===================
+// =================== DATABASE OPERATIONS ===================
 AHX.files.openDB = () => new Promise((resolve, reject) => {
-  const request = indexedDB.open(DB_NAME, DB_VERSION);
+  const request = indexedDB.open(APP_CONFIG.dbName, APP_CONFIG.dbVersion);
   
   request.onupgradeneeded = (event) => {
     const db = event.target.result;
     
-    // Files store
     if (!db.objectStoreNames.contains('files')) {
       const filesStore = db.createObjectStore('files', { keyPath: 'id' });
       filesStore.createIndex('by_subject', 'subjectKey', { unique: false });
@@ -289,41 +233,27 @@ AHX.files.openDB = () => new Promise((resolve, reject) => {
       filesStore.createIndex('by_type', 'type', { unique: false });
     }
     
-    // Settings store
     if (!db.objectStoreNames.contains('settings')) {
       db.createObjectStore('settings', { keyPath: 'key' });
     }
-    
-    // Analytics store
-    if (!db.objectStoreNames.contains('analytics')) {
-      const analyticsStore = db.createObjectStore('analytics', { keyPath: 'id', autoIncrement: true });
-      analyticsStore.createIndex('by_event', 'event', { unique: false });
-      analyticsStore.createIndex('by_date', 'timestamp', { unique: false });
-    }
   };
   
-  request.onsuccess = () => {
-    resolve(request.result);
-  };
-  
-  request.onerror = () => {
-    reject(new Error('Failed to open IndexedDB'));
-  };
+  request.onsuccess = () => resolve(request.result);
+  request.onerror = () => reject(new Error('Failed to open IndexedDB'));
 });
 
 AHX.files.add = async (records) => {
   try {
+    if (!AHX.state.db) throw new Error('Database not available');
+    
     const tx = AHX.state.db.transaction(['files'], 'readwrite');
     const store = tx.objectStore('files');
     
     const promises = records.map(record => {
+      record.addedAt = record.addedAt || Date.now();
+      record.updatedAt = Date.now();
+      
       return new Promise((resolve, reject) => {
-        // Add metadata
-        record.addedAt = record.addedAt || Date.now();
-        record.updatedAt = Date.now();
-        record.synced = false;
-        record.version = 1;
-        
         const request = store.put(record);
         request.onsuccess = () => resolve(record);
         request.onerror = () => reject(request.error);
@@ -333,16 +263,17 @@ AHX.files.add = async (records) => {
     const results = await Promise.all(promises);
     await new Promise(resolve => tx.oncomplete = resolve);
     
-    AHX.analytics.track('files_added', { count: records.length });
     return results;
   } catch (error) {
-    AHX.util.handleError(error, 'files.add');
+    console.error('Failed to add files:', error);
     throw error;
   }
 };
 
 AHX.files.get = async (id) => {
   try {
+    if (!AHX.state.db) return null;
+    
     return new Promise((resolve, reject) => {
       const tx = AHX.state.db.transaction(['files'], 'readonly');
       const store = tx.objectStore('files');
@@ -352,13 +283,43 @@ AHX.files.get = async (id) => {
       request.onerror = () => reject(request.error);
     });
   } catch (error) {
-    AHX.util.handleError(error, 'files.get');
-    throw error;
+    console.error('Failed to get file:', error);
+    return null;
+  }
+};
+
+AHX.files.all = async () => {
+  try {
+    if (!AHX.state.db) return [];
+    
+    return new Promise((resolve, reject) => {
+      const results = [];
+      const tx = AHX.state.db.transaction(['files'], 'readonly');
+      const store = tx.objectStore('files');
+      const request = store.openCursor();
+      
+      request.onsuccess = (event) => {
+        const cursor = event.target.result;
+        if (cursor) {
+          results.push(cursor.value);
+          cursor.continue();
+        } else {
+          resolve(results.sort((a, b) => b.addedAt - a.addedAt));
+        }
+      };
+      
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    console.error('Failed to get all files:', error);
+    return [];
   }
 };
 
 AHX.files.listBySubject = async (subjectKey) => {
   try {
+    if (!AHX.state.db) return [];
+    
     return new Promise((resolve, reject) => {
       const results = [];
       const tx = AHX.state.db.transaction(['files'], 'readonly');
@@ -379,8 +340,29 @@ AHX.files.listBySubject = async (subjectKey) => {
       request.onerror = () => reject(request.error);
     });
   } catch (error) {
-    AHX.util.handleError(error, 'files.listBySubject');
+    console.error('Failed to get files by subject:', error);
     return [];
+  }
+};
+
+AHX.files.remove = async (id) => {
+  try {
+    if (!AHX.state.db) throw new Error('Database not available');
+    
+    const tx = AHX.state.db.transaction(['files'], 'readwrite');
+    const store = tx.objectStore('files');
+    
+    await new Promise((resolve, reject) => {
+      const request = store.delete(id);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+    
+    await new Promise(resolve => tx.oncomplete = resolve);
+    return true;
+  } catch (error) {
+    console.error('Failed to remove file:', error);
+    throw error;
   }
 };
 
@@ -395,74 +377,8 @@ AHX.files.search = async (query) => {
       (file.tags && file.tags.some(tag => tag.toLowerCase().includes(searchTerm)))
     );
   } catch (error) {
-    AHX.util.handleError(error, 'files.search');
+    console.error('Search failed:', error);
     return [];
-  }
-};
-
-AHX.files.all = async () => {
-  try {
-    return new Promise((resolve, reject) => {
-      const results = [];
-      const tx = AHX.state.db.transaction(['files'], 'readonly');
-      const store = tx.objectStore('files');
-      const request = store.openCursor();
-      
-      request.onsuccess = (event) => {
-        const cursor = event.target.result;
-        if (cursor) {
-          results.push(cursor.value);
-          cursor.continue();
-        } else {
-          resolve(results);
-        }
-      };
-      
-      request.onerror = () => reject(request.error);
-    });
-  } catch (error) {
-    AHX.util.handleError(error, 'files.all');
-    return [];
-  }
-};
-
-AHX.files.remove = async (id) => {
-  try {
-    const tx = AHX.state.db.transaction(['files'], 'readwrite');
-    const store = tx.objectStore('files');
-    
-    await new Promise((resolve, reject) => {
-      const request = store.delete(id);
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
-    });
-    
-    await new Promise(resolve => tx.oncomplete = resolve);
-    AHX.analytics.track('file_deleted');
-    return true;
-  } catch (error) {
-    AHX.util.handleError(error, 'files.remove');
-    throw error;
-  }
-};
-
-AHX.files.update = async (id, updates) => {
-  try {
-    const file = await AHX.files.get(id);
-    if (!file) throw new Error('File not found');
-    
-    const updatedFile = {
-      ...file,
-      ...updates,
-      updatedAt: Date.now(),
-      version: (file.version || 1) + 1
-    };
-    
-    await AHX.files.add([updatedFile]);
-    return updatedFile;
-  } catch (error) {
-    AHX.util.handleError(error, 'files.update');
-    throw error;
   }
 };
 
@@ -483,12 +399,12 @@ AHX.files.getStats = async () => {
       recentCount: files.filter(f => Date.now() - f.addedAt < 7 * 24 * 60 * 60 * 1000).length
     };
   } catch (error) {
-    AHX.util.handleError(error, 'files.getStats');
+    console.error('Failed to get stats:', error);
     return { total: 0, totalSize: 0, subjectCounts: {}, recentCount: 0 };
   }
 };
 
-// =================== FILE UPLOAD PIPELINE ===================
+// =================== FILE UPLOAD ===================
 AHX.files.saveUploads = async () => {
   try {
     const subjectKey = document.getElementById('uploadSubject')?.value;
@@ -520,26 +436,22 @@ AHX.files.saveUploads = async () => {
     AHX.ui.showProgress('Uploading files...', 0);
     
     const records = await Promise.all(files.map(async (file, index) => {
-      try {
-        const buffer = await file.arrayBuffer();
-        const progress = ((index + 1) / files.length) * 100;
-        AHX.ui.updateProgress(progress);
-        
-        return {
-          id: AHX.util.generateId(),
-          subjectKey,
-          name: file.name,
-          type: file.type || 'application/octet-stream',
-          size: file.size,
-          addedAt: Date.now(),
-          blob: new Blob([buffer], { type: file.type }),
-          description: '',
-          tags: [],
-          favorite: false
-        };
-      } catch (error) {
-        throw new Error(`Failed to process ${file.name}: ${error.message}`);
-      }
+      const buffer = await file.arrayBuffer();
+      const progress = ((index + 1) / files.length) * 100;
+      AHX.ui.updateProgress(progress);
+      
+      return {
+        id: AHX.util.generateId(),
+        subjectKey,
+        name: file.name,
+        type: file.type || 'application/octet-stream',
+        size: file.size,
+        addedAt: Date.now(),
+        blob: new Blob([buffer], { type: file.type }),
+        description: '',
+        tags: [],
+        favorite: false
+      };
     }));
     
     await AHX.files.add(records);
@@ -547,21 +459,22 @@ AHX.files.saveUploads = async () => {
     AHX.ui.closeUpload();
     AHX.ui.showNotification(`Successfully uploaded ${files.length} file(s)`, 'success');
     
-    // Refresh current view if on subject page
-    const { name, param } = AHX.view.getRoute();
-    if (name === 'subject' && param === subjectKey) {
+    // Refresh current view
+    const route = AHX.view.getCurrentRoute();
+    if (route.name === 'subject' && route.param === subjectKey || route.name === 'dashboard') {
       await AHX.view.render();
     }
     
     return records;
   } catch (error) {
     AHX.ui.hideProgress();
-    AHX.util.handleError(error, 'files.saveUploads');
+    console.error('Upload failed:', error);
+    AHX.ui.showNotification(error.message || 'Upload failed', 'error');
     throw error;
   }
 };
 
-// =================== QR CODE PIPELINE ===================
+// =================== QR CODE SCANNER ===================
 AHX.qr.scanner = null;
 
 AHX.qr.startScanner = async () => {
@@ -578,7 +491,6 @@ AHX.qr.startScanner = async () => {
     const cameras = await Html5Qrcode.getCameras();
     if (!cameras.length) throw new Error('No cameras found');
     
-    // Prefer back camera
     const backCamera = cameras.find(camera => 
       camera.label.toLowerCase().includes('back') || 
       camera.label.toLowerCase().includes('rear')
@@ -597,7 +509,8 @@ AHX.qr.startScanner = async () => {
     
     return true;
   } catch (error) {
-    AHX.util.handleError(error, 'qr.startScanner');
+    console.error('QR scanner start failed:', error);
+    AHX.ui.showNotification(error.message || 'Failed to start camera', 'error');
     return false;
   }
 };
@@ -616,16 +529,16 @@ AHX.qr.stopScanner = async () => {
 
 AHX.qr.onScanSuccess = async (decodedText, decodedResult) => {
   try {
-    AHX.analytics.track('qr_scan_success');
     await AHX.qr.handleScanResult(decodedText);
     AHX.ui.closeQRScanner();
   } catch (error) {
-    AHX.util.handleError(error, 'qr.onScanSuccess');
+    console.error('QR scan processing failed:', error);
+    AHX.ui.showNotification('Failed to process QR code', 'error');
   }
 };
 
 AHX.qr.onScanFailure = (error) => {
-  // Silent handling of scan failures (normal when no QR code is visible)
+  // Silent handling of scan failures
 };
 
 AHX.qr.handleScanResult = async (qrData) => {
@@ -633,18 +546,15 @@ AHX.qr.handleScanResult = async (qrData) => {
     let fileInfo;
     
     if (qrData.startsWith('http')) {
-      // URL - create a link file
       fileInfo = {
         name: 'Scanned Link',
         url: qrData,
         type: 'url',
-        description: 'Scanned from QR code'
+        description: 'Link scanned from QR code'
       };
     } else if (qrData.startsWith('{')) {
-      // JSON data
       fileInfo = JSON.parse(qrData);
     } else {
-      // Plain text - create a note
       fileInfo = {
         name: 'Scanned Note',
         content: qrData,
@@ -653,7 +563,6 @@ AHX.qr.handleScanResult = async (qrData) => {
       };
     }
     
-    // Create file record
     const record = {
       id: AHX.util.generateId(),
       subjectKey: 'scanned',
@@ -672,9 +581,9 @@ AHX.qr.handleScanResult = async (qrData) => {
     await AHX.files.add([record]);
     AHX.ui.showNotification('QR content saved successfully!', 'success');
     
-    // Refresh view if on scanned files page
-    const { name, param } = AHX.view.getRoute();
-    if ((name === 'subject' && param === 'scanned') || name === 'dashboard') {
+    // Refresh view if needed
+    const route = AHX.view.getCurrentRoute();
+    if ((route.name === 'subject' && route.param === 'scanned') || route.name === 'dashboard') {
       await AHX.view.render();
     }
     
@@ -683,25 +592,26 @@ AHX.qr.handleScanResult = async (qrData) => {
   }
 };
 
-// =================== UI PIPELINE ===================
+// =================== UI MANAGEMENT ===================
 AHX.ui.showNotification = (message, type = 'info', duration = 5000) => {
   const notification = document.createElement('div');
-  notification.className = `notification notification-${type}`;
+  notification.className = `notification ${type}`;
   notification.innerHTML = `
-    <div class="notification-content">
-      <span class="notification-message">${message}</span>
-      <button class="notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+      <span>${message}</span>
+      <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; margin-left: 1rem;">×</button>
     </div>
   `;
   
-  // Add to page
   document.body.appendChild(notification);
+  
+  // Show notification
+  setTimeout(() => notification.classList.add('show'), 100);
   
   // Auto remove
   setTimeout(() => {
-    if (notification.parentNode) {
-      notification.remove();
-    }
+    notification.classList.remove('show');
+    setTimeout(() => notification.remove(), 300);
   }, duration);
 };
 
@@ -710,17 +620,16 @@ AHX.ui.showProgress = (message, progress = 0) => {
   if (!progressModal) {
     progressModal = document.createElement('div');
     progressModal.id = 'progressModal';
+    progressModal.className = 'modal active';
     progressModal.innerHTML = `
-      <div class="modal-backdrop"></div>
-      <div class="progress-panel">
-        <div class="progress-message">${message}</div>
-        <div class="progress-bar">
-          <div class="progress-fill" style="width: ${progress}%"></div>
+      <div class="modal-panel">
+        <div class="progress-message" style="margin-bottom: 1rem; text-align: center;">${message}</div>
+        <div style="background: var(--gray-200); height: 8px; border-radius: 4px; overflow: hidden;">
+          <div class="progress-fill" style="height: 100%; background: var(--primary); width: ${progress}%; transition: width 0.3s ease;"></div>
         </div>
-        <div class="progress-text">${Math.round(progress)}%</div>
+        <div class="progress-text" style="text-align: center; margin-top: 0.5rem; font-size: 0.9rem; color: var(--gray-600);">${Math.round(progress)}%</div>
       </div>
     `;
-    progressModal.className = 'modal';
     document.body.appendChild(progressModal);
   }
   
@@ -747,7 +656,7 @@ AHX.ui.openUpload = (subjectKey) => {
     if (subjectKey && subjectSelect) {
       subjectSelect.value = subjectKey;
     }
-    modal.classList.remove('hidden');
+    modal.classList.add('active');
   }
 };
 
@@ -756,7 +665,7 @@ AHX.ui.closeUpload = () => {
   const input = document.getElementById('uploadFiles');
   
   if (input) input.value = '';
-  if (modal) modal.classList.add('hidden');
+  if (modal) modal.classList.remove('active');
 };
 
 AHX.ui.openQRScanner = async () => {
@@ -775,44 +684,11 @@ AHX.ui.closeQRScanner = async () => {
   }
 };
 
-AHX.ui.toggleTheme = () => {
-  const root = document.documentElement;
-  const currentTheme = root.classList.contains('dark') ? 'dark' : 'light';
-  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-  
-  root.classList.toggle('dark');
-  AHX.state.theme = newTheme;
-  
-  try {
-    localStorage.setItem('ahx_theme', newTheme);
-  } catch (error) {
-    console.warn('Failed to save theme preference:', error);
-  }
-  
-  AHX.analytics.track('theme_changed', { theme: newTheme });
-};
-
-AHX.ui.installPWA = async () => {
-  try {
-    if (deferredPrompt) {
-      const result = await deferredPrompt.prompt();
-      deferredPrompt = null;
-      
-      const installBtn = document.getElementById('installBtn');
-      if (installBtn) installBtn.classList.add('hidden');
-      
-      AHX.analytics.track('pwa_install_prompted', { outcome: result.outcome });
-    }
-  } catch (error) {
-    AHX.util.handleError(error, 'ui.installPWA');
-  }
-};
-
-// =================== ROUTING PIPELINE ===================
-AHX.view.getRoute = () => {
+// =================== VIEW SYSTEM ===================
+AHX.view.getCurrentRoute = () => {
   const hash = location.hash || '#/dashboard';
   const parts = hash.slice(2).split('/');
-  return { name: parts[0] || 'dashboard', param: parts[1] || null, params: parts.slice(1) };
+  return { name: parts[0] || 'dashboard', param: parts[1] || null };
 };
 
 AHX.view.render = async () => {
@@ -820,141 +696,206 @@ AHX.view.render = async () => {
     const root = document.getElementById('viewRoot');
     if (!root) return;
     
-    const { name, param } = AHX.view.getRoute();
+    const route = AHX.view.getCurrentRoute();
+    AHX.state.currentRoute = route;
     
-    // Auth check
-    if (!AHX.auth.current()) {
-      window.location.href = 'index.html';
-      return;
-    }
+    // Update navigation
+    updateNavigation(route.name);
     
     // Show loading
-    root.innerHTML = '<div class="loading-container"><div class="loader"></div><p>Loading...</p></div>';
+    root.innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
     
-    const fab = document.getElementById('fab');
+    let content = '';
     
-    switch (name) {
+    switch (route.name) {
       case 'dashboard':
-        root.innerHTML = await AHX.view.dashboard();
-        fab?.classList.remove('hidden');
+        content = await AHX.view.dashboard();
         break;
-        
+      case 'subjects':
+        content = await AHX.view.subjects();
+        break;
       case 'subject':
-        if (param) {
-          const subject = AHX.state.subjects.find(s => s.key === param);
-          if (subject) {
-            root.innerHTML = await AHX.view.subject(subject);
-            fab?.classList.remove('hidden');
-          } else {
-            location.hash = '#/dashboard';
-            return;
-          }
+        if (route.param) {
+          const subject = AHX.state.subjects.find(s => s.key === route.param);
+          content = subject ? await AHX.view.subject(subject) : await AHX.view.dashboard();
         } else {
-          root.innerHTML = await AHX.view.subjects();
-          fab?.classList.add('hidden');
+          content = await AHX.view.subjects();
         }
         break;
-        
+      case 'files':
+        content = await AHX.view.allFiles();
+        break;
       case 'search':
-        root.innerHTML = await AHX.view.search();
-        fab?.classList.add('hidden');
+        content = await AHX.view.search();
         break;
-        
+      case 'qr-scanner':
+        content = await AHX.view.qrScanner();
+        break;
       case 'analytics':
-        root.innerHTML = await AHX.view.analytics();
-        fab?.classList.add('hidden');
+        content = await AHX.view.analytics();
         break;
-        
       case 'settings':
-        root.innerHTML = await AHX.view.settings();
-        fab?.classList.add('hidden');
+        content = await AHX.view.settings();
         break;
-        
       default:
         location.hash = '#/dashboard';
         return;
     }
     
-    AHX.analytics.track('page_view', { page: name, param });
+    root.innerHTML = content;
+    
+    // Show/hide FAB based on route
+    const fab = document.getElementById('fab');
+    if (fab) {
+      if (['dashboard', 'subjects', 'subject', 'files'].includes(route.name)) {
+        fab.classList.remove('hidden');
+      } else {
+        fab.classList.add('hidden');
+      }
+    }
+    
   } catch (error) {
-    AHX.util.handleError(error, 'view.render');
+    console.error('Render error:', error);
     const root = document.getElementById('viewRoot');
     if (root) {
       root.innerHTML = `
-        <div class="error-container">
+        <div class="error-state">
+          <div class="empty-icon">⚠️</div>
           <h2>Something went wrong</h2>
-          <p>Please refresh the page or try again later.</p>
-          <button onclick="location.reload()" class="btn-primary">Refresh Page</button>
+          <p>Please try refreshing the page</p>
+          <button class="btn btn-primary" onclick="location.reload()">Refresh</button>
         </div>
       `;
     }
   }
 };
 
-// =================== VIEW TEMPLATES ===================
 AHX.view.dashboard = async () => {
   const stats = await AHX.files.getStats();
   const recentFiles = (await AHX.files.all()).slice(0, 5);
   
   return AHX.util.html`
-    <div class="dashboard">
-      <div class="dashboard-header">
-        <h1>Dashboard</h1>
-        <p>Welcome back, ${AHX.state.user?.name || 'User'}!</p>
+    <div class="header">
+      <div>
+        <h1 class="header-title">Dashboard</h1>
+        <p class="header-subtitle">Welcome back, ${AHX.state.user?.name || 'User'}! Here's your academic overview.</p>
       </div>
-      
-      <div class="stats-grid">
-        <div class="stat-card">
+      <div class="header-actions">
+        <button class="btn" onclick="toggleTheme()">🌓</button>
+        <button class="btn btn-primary" onclick="AHX.ui.openUpload()">Upload Files</button>
+      </div>
+    </div>
+    
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-header">
           <div class="stat-icon">📁</div>
-          <div class="stat-value">${stats.total}</div>
-          <div class="stat-label">Total Files</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-value">${stats.total}</div>
+        <div class="stat-label">Total Files</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">
           <div class="stat-icon">📚</div>
-          <div class="stat-value">${AHX.state.subjects.length}</div>
-          <div class="stat-label">Subjects</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-value">${AHX.state.subjects.length}</div>
+        <div class="stat-label">Subjects</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">
           <div class="stat-icon">💾</div>
-          <div class="stat-value">${AHX.util.bytes(stats.totalSize)}</div>
-          <div class="stat-label">Storage Used</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-value">${AHX.util.bytes(stats.totalSize)}</div>
+        <div class="stat-label">Storage Used</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">
           <div class="stat-icon">📈</div>
-          <div class="stat-value">${stats.recentCount}</div>
-          <div class="stat-label">Recent Files</div>
+        </div>
+        <div class="stat-value">${stats.recentCount}</div>
+        <div class="stat-label">Recent Files</div>
+      </div>
+    </div>
+    
+    <div class="content-grid">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Recent Files</h2>
+        </div>
+        <div>
+          ${recentFiles.length > 0 ? recentFiles.map(file => `
+            <div class="file-item" onclick="AHX.view.openFile('${file.id}')">
+              <div class="file-icon">${AHX.view.getFileIcon(file.type)}</div>
+              <div class="file-info">
+                <div class="file-name">${file.name}</div>
+                <div class="file-meta">${AHX.util.formatDate(file.addedAt)} • ${AHX.util.bytes(file.size)}</div>
+              </div>
+            </div>
+          `).join('') : '<div class="empty-state"><div class="empty-icon">📁</div><p>No files uploaded yet</p></div>'}
         </div>
       </div>
       
-      <div class="content-grid">
-        <div class="recent-section">
-          <h2>Recent Files</h2>
-          <div class="file-list">
-            ${recentFiles.map(file => `
-              <div class="file-item" onclick="AHX.view.openFile('${file.id}')">
-                <div class="file-icon">${AHX.view.getFileIcon(file.type)}</div>
-                <div class="file-info">
-                  <div class="file-name">${file.name}</div>
-                  <div class="file-meta">${AHX.util.formatDate(file.addedAt)} • ${AHX.util.bytes(file.size)}</div>
-                </div>
-              </div>
-            `).join('')}
-          </div>
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Quick Actions</h2>
         </div>
-        
-        <div class="subjects-section">
-          <h2>Subjects</h2>
-          <div class="subject-grid">
-            ${AHX.state.subjects.map(subject => `
-              <div class="subject-card" onclick="location.hash='#/subject/${subject.key}'">
-                <div class="subject-icon">${subject.icon || '📚'}</div>
-                <div class="subject-name">${subject.name}</div>
-                <div class="subject-count">${stats.subjectCounts[subject.key] || 0} files</div>
-              </div>
-            `).join('')}
-          </div>
+        <div>
+          <button class="action-btn" onclick="AHX.ui.openUpload()">
+            <span style="font-size: 1.5rem;">📤</span>
+            <div>
+              <div style="font-weight: 600;">Upload Files</div>
+              <div style="font-size: 0.8rem; color: var(--gray-500);">Add new documents</div>
+            </div>
+          </button>
+          
+          <button class="action-btn" onclick="AHX.ui.openQRScanner()">
+            <span style="font-size: 1.5rem;">📷</span>
+            <div>
+              <div style="font-weight: 600;">QR Scanner</div>
+              <div style="font-size: 0.8rem; color: var(--gray-500);">Scan college notes</div>
+            </div>
+          </button>
+          
+          <button class="action-btn" onclick="location.hash='#/search'">
+            <span style="font-size: 1.5rem;">🔍</span>
+            <div>
+              <div style="font-weight: 600;">Search Files</div>
+              <div style="font-size: 0.8rem; color: var(--gray-500);">Find documents</div>
+            </div>
+          </button>
         </div>
       </div>
+    </div>
+  `;
+};
+
+AHX.view.subjects = async () => {
+  const stats = await AHX.files.getStats();
+  
+  return AHX.util.html`
+    <div class="header">
+      <div>
+        <h1 class="header-title">Subjects</h1>
+        <p class="header-subtitle">Organize your files by subject categories</p>
+      </div>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+      ${AHX.state.subjects.map(subject => `
+        <div class="card" style="cursor: pointer; transition: var(--transition);" onclick="location.hash='#/subject/${subject.key}'" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+          <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+            <div style="font-size: 2rem;">${subject.icon}</div>
+            <div>
+              <div style="font-size: 1.2rem; font-weight: 600; color: var(--gray-900);">${subject.name}</div>
+              <div style="font-size: 0.9rem; color: var(--gray-500);">${subject.code}</div>
+            </div>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="color: var(--gray-600);">${stats.subjectCounts[subject.key] || 0} files</span>
+            <button class="btn btn-primary" onclick="event.stopPropagation(); AHX.ui.openUpload('${subject.key}')" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Add Files</button>
+          </div>
+        </div>
+      `).join('')}
     </div>
   `;
 };
@@ -963,61 +904,190 @@ AHX.view.subject = async (subject) => {
   const files = await AHX.files.listBySubject(subject.key);
   
   return AHX.util.html`
-    <div class="subject-view">
-      <div class="subject-header">
-        <button onclick="history.back()" class="back-btn">←</button>
-        <div class="subject-info">
-          <h1>${subject.name}</h1>
-          <p>${subject.description || `${files.length} files`}</p>
+    <div class="header">
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <button onclick="history.back()" style="background: none; border: 1px solid var(--gray-300); border-radius: var(--radius-small); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer;">←</button>
+        <div>
+          <h1 class="header-title" style="display: flex; align-items: center; gap: 1rem;">
+            <span style="font-size: 2rem;">${subject.icon}</span>
+            ${subject.name}
+          </h1>
+          <p class="header-subtitle">${subject.code} • ${files.length} files</p>
         </div>
-        <button onclick="AHX.ui.openUpload('${subject.key}')" class="btn-primary">Add Files</button>
       </div>
-      
-      <div class="file-grid">
+      <div class="header-actions">
+        <button class="btn btn-primary" onclick="AHX.ui.openUpload('${subject.key}')">Add Files</button>
+      </div>
+    </div>
+    
+    ${files.length > 0 ? `
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
         ${files.map(file => `
-          <div class="file-card" onclick="AHX.view.openFile('${file.id}')">
-            <div class="file-preview">${AHX.view.getFileIcon(file.type)}</div>
-            <div class="file-details">
-              <div class="file-name">${file.name}</div>
-              <div class="file-meta">
-                ${AHX.util.formatDate(file.addedAt)} • ${AHX.util.bytes(file.size)}
+          <div class="card" style="cursor: pointer; transition: var(--transition);" onclick="AHX.view.openFile('${file.id}')" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+              <div class="file-icon">${AHX.view.getFileIcon(file.type)}</div>
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-weight: 600; color: var(--gray-900); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${file.name}</div>
+                <div style="font-size: 0.8rem; color: var(--gray-500);">${AHX.util.formatDate(file.addedAt)} • ${AHX.util.bytes(file.size)}</div>
               </div>
             </div>
-            <div class="file-actions">
-              <button onclick="event.stopPropagation(); AHX.files.remove('${file.id}').then(() => AHX.view.render())" class="btn-danger">Delete</button>
+            <div style="display: flex; justify-content: flex-end;">
+              <button onclick="event.stopPropagation(); AHX.files.remove('${file.id}').then(() => AHX.view.render())" class="btn" style="background: var(--danger); color: white; border: none; padding: 0.4rem 0.8rem; font-size: 0.8rem;">Delete</button>
             </div>
           </div>
         `).join('')}
       </div>
-      
-      ${files.length === 0 ? `
-        <div class="empty-state">
-          <div class="empty-icon">📁</div>
-          <h3>No files yet</h3>
-          <p>Upload your first file to get started</p>
-          <button onclick="AHX.ui.openUpload('${subject.key}')" class="btn-primary">Upload Files</button>
-        </div>
-      ` : ''}
+    ` : `
+      <div class="empty-state">
+        <div class="empty-icon">${subject.icon}</div>
+        <h3>No files in ${subject.name} yet</h3>
+        <p>Upload your first ${subject.name.toLowerCase()} file to get started</p>
+        <button class="btn btn-primary" onclick="AHX.ui.openUpload('${subject.key}')">Upload Files</button>
+      </div>
+    `}
+  `;
+};
+
+AHX.view.allFiles = async () => {
+  const files = await AHX.files.all();
+  
+  return AHX.util.html`
+    <div class="header">
+      <div>
+        <h1 class="header-title">All Files</h1>
+        <p class="header-subtitle">Browse all your uploaded documents</p>
+      </div>
     </div>
+    
+    ${files.length > 0 ? `
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+        ${files.map(file => `
+          <div class="card" onclick="AHX.view.openFile('${file.id}')">
+            <div class="file-item">
+              <div class="file-icon">${AHX.view.getFileIcon(file.type)}</div>
+              <div class="file-info">
+                <div class="file-name">${file.name}</div>
+                <div class="file-meta">${AHX.state.subjects.find(s => s.key === file.subjectKey)?.name || file.subjectKey} • ${AHX.util.formatDate(file.addedAt)}</div>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    ` : `
+      <div class="empty-state">
+        <div class="empty-icon">📁</div>
+        <h3>No files uploaded yet</h3>
+        <p>Start by uploading your first document</p>
+        <button class="btn btn-primary" onclick="AHX.ui.openUpload()">Upload Files</button>
+      </div>
+    `}
   `;
 };
 
 AHX.view.search = async () => {
   return AHX.util.html`
-    <div class="search-view">
-      <div class="search-header">
-        <h1>Search Files</h1>
-        <div class="search-box">
-          <input type="text" id="searchInput" placeholder="Search by filename, content, or tags..." class="search-input">
-          <button onclick="AHX.view.performSearch()" class="search-btn">Search</button>
-        </div>
+    <div class="header">
+      <div>
+        <h1 class="header-title">Search Files</h1>
+        <p class="header-subtitle">Find your documents quickly</p>
       </div>
-      
-      <div id="searchResults" class="search-results">
-        <div class="empty-search">
-          <div class="search-icon">🔍</div>
-          <p>Enter a search term to find your files</p>
+    </div>
+    
+    <div class="card" style="margin-bottom: 2rem;">
+      <div style="display: flex; gap: 1rem;">
+        <input type="text" id="searchInput" placeholder="Search by filename, content, or tags..." style="flex: 1; padding: 1rem; border: 2px solid var(--gray-200); border-radius: var(--radius-medium); font-size: 1rem;">
+        <button class="btn btn-primary" onclick="AHX.view.performSearch()">Search</button>
+      </div>
+    </div>
+    
+    <div id="searchResults">
+      <div class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <p>Enter a search term to find your files</p>
+      </div>
+    </div>
+  `;
+};
+
+AHX.view.qrScanner = async () => {
+  return AHX.util.html`
+    <div class="header">
+      <div>
+        <h1 class="header-title">QR Code Scanner</h1>
+        <p class="header-subtitle">Scan QR codes to save notes and links</p>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div style="text-align: center; padding: 2rem;">
+        <div style="font-size: 4rem; margin-bottom: 2rem;">📷</div>
+        <h3>Ready to Scan</h3>
+        <p style="margin: 1rem 0 2rem 0; color: var(--gray-500);">Click the button below to start scanning QR codes from your classmates or professors</p>
+        <button class="btn btn-primary" onclick="AHX.ui.openQRScanner()">Start QR Scanner</button>
+      </div>
+    </div>
+  `;
+};
+
+AHX.view.analytics = async () => {
+  const stats = await AHX.files.getStats();
+  
+  return AHX.util.html`
+    <div class="header">
+      <div>
+        <h1 class="header-title">Analytics</h1>
+        <p class="header-subtitle">Insights about your academic files</p>
+      </div>
+    </div>
+    
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-header">
+          <div class="stat-icon">📊</div>
         </div>
+        <div class="stat-value">${stats.total}</div>
+        <div class="stat-label">Total Files</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">
+          <div class="stat-icon">📈</div>
+        </div>
+        <div class="stat-value">${stats.recentCount}</div>
+        <div class="stat-label">This Week</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">
+          <div class="stat-icon">💾</div>
+        </div>
+        <div class="stat-value">${AHX.util.bytes(stats.totalSize)}</div>
+        <div class="stat-label">Storage Used</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">
+          <div class="stat-icon">⭐</div>
+        </div>
+        <div class="stat-value">${Object.keys(stats.subjectCounts).length}</div>
+        <div class="stat-label">Active Subjects</div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Files by Subject</h2>
+      </div>
+      <div>
+        ${Object.entries(stats.subjectCounts).map(([key, count]) => {
+          const subject = AHX.state.subjects.find(s => s.key === key);
+          return `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--gray-200);">
+              <div style="display: flex; align-items: center; gap: 1rem;">
+                <span style="font-size: 1.5rem;">${subject?.icon || '📄'}</span>
+                <span style="font-weight: 600;">${subject?.name || key}</span>
+              </div>
+              <span style="color: var(--gray-600);">${count} files</span>
+            </div>
+          `;
+        }).join('')}
       </div>
     </div>
   `;
@@ -1027,69 +1097,71 @@ AHX.view.settings = async () => {
   const stats = await AHX.files.getStats();
   
   return AHX.util.html`
-    <div class="settings-view">
-      <div class="settings-header">
-        <h1>Settings</h1>
+    <div class="header">
+      <div>
+        <h1 class="header-title">Settings</h1>
+        <p class="header-subtitle">Manage your app preferences and data</p>
+      </div>
+    </div>
+    
+    <div style="display: grid; gap: 2rem;">
+      <div class="card">
+        <h2 style="margin-bottom: 1rem; color: var(--gray-900);">Account Information</h2>
+        <div style="display: grid; gap: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--gray-200);">
+            <div>
+              <div style="font-weight: 600;">Email</div>
+              <div style="color: var(--gray-500); font-size: 0.9rem;">${AHX.state.user?.email || 'Not available'}</div>
+            </div>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--gray-200);">
+            <div>
+              <div style="font-weight: 600;">Name</div>
+              <div style="color: var(--gray-500); font-size: 0.9rem;">${AHX.state.user?.name || 'Not available'}</div>
+            </div>
+          </div>
+        </div>
       </div>
       
-      <div class="settings-sections">
-        <div class="settings-section">
-          <h2>Account</h2>
-          <div class="setting-item">
-            <div class="setting-info">
-              <div class="setting-label">Email</div>
-              <div class="setting-value">${AHX.state.user?.email}</div>
+      <div class="card">
+        <h2 style="margin-bottom: 1rem; color: var(--gray-900);">Storage</h2>
+        <div style="display: grid; gap: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--gray-200);">
+            <div>
+              <div style="font-weight: 600;">Total Files</div>
+              <div style="color: var(--gray-500); font-size: 0.9rem;">Documents stored locally</div>
             </div>
+            <div style="font-weight: 600;">${stats.total}</div>
           </div>
-          <div class="setting-item">
-            <div class="setting-info">
-              <div class="setting-label">Name</div>
-              <div class="setting-value">${AHX.state.user?.name}</div>
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--gray-200);">
+            <div>
+              <div style="font-weight: 600;">Storage Used</div>
+              <div style="color: var(--gray-500); font-size: 0.9rem;">Space occupied by files</div>
             </div>
+            <div style="font-weight: 600;">${AHX.util.bytes(stats.totalSize)}</div>
           </div>
         </div>
-        
-        <div class="settings-section">
-          <h2>Storage</h2>
-          <div class="setting-item">
-            <div class="setting-info">
-              <div class="setting-label">Total Files</div>
-              <div class="setting-value">${stats.total}</div>
+      </div>
+      
+      <div class="card">
+        <h2 style="margin-bottom: 1rem; color: var(--gray-900);">Preferences</h2>
+        <div style="display: grid; gap: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--gray-200);">
+            <div>
+              <div style="font-weight: 600;">Theme</div>
+              <div style="color: var(--gray-500); font-size: 0.9rem;">App appearance</div>
             </div>
-          </div>
-          <div class="setting-item">
-            <div class="setting-info">
-              <div class="setting-label">Storage Used</div>
-              <div class="setting-value">${AHX.util.bytes(stats.totalSize)}</div>
-            </div>
+            <button class="btn" onclick="toggleTheme()">${AHX.state.theme === 'dark' ? 'Dark' : 'Light'}</button>
           </div>
         </div>
-        
-        <div class="settings-section">
-          <h2>Preferences</h2>
-          <div class="setting-item">
-            <div class="setting-info">
-              <div class="setting-label">Theme</div>
-              <div class="setting-value">
-                <button onclick="AHX.ui.toggleTheme()" class="btn">${AHX.state.theme === 'dark' ? 'Dark' : 'Light'}</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="settings-section">
-          <h2>Data Management</h2>
-          <div class="setting-item">
-            <button onclick="AHX.files.exportData()" class="btn">Export Data</button>
-            <button onclick="AHX.files.clearAll()" class="btn-danger">Clear All Data</button>
-          </div>
-        </div>
-        
-        <div class="settings-section">
-          <h2>Account Actions</h2>
-          <div class="setting-item">
-            <button onclick="AHX.auth.signOut()" class="btn-danger">Sign Out</button>
-          </div>
+      </div>
+      
+      <div class="card">
+        <h2 style="margin-bottom: 1rem; color: var(--gray-900);">Actions</h2>
+        <div style="display: grid; gap: 1rem;">
+          <button class="btn" onclick="exportData()" style="justify-self: start;">Export All Data</button>
+          <button class="btn" onclick="clearAllData()" style="background: var(--danger); color: white; border: none; justify-self: start;">Clear All Local Data</button>
+          <button class="btn" onclick="AHX.auth.signOut()" style="background: var(--danger); color: white; border: none; justify-self: start;">Sign Out</button>
         </div>
       </div>
     </div>
@@ -1132,9 +1204,9 @@ AHX.view.openFile = async (id) => {
       throw new Error('Cannot open file: No content available');
     }
     
-    AHX.analytics.track('file_opened', { fileType: file.type });
   } catch (error) {
-    AHX.util.handleError(error, 'view.openFile');
+    console.error('Failed to open file:', error);
+    AHX.ui.showNotification(error.message || 'Failed to open file', 'error');
   }
 };
 
@@ -1145,14 +1217,14 @@ AHX.view.performSearch = AHX.util.debounce(async () => {
   if (!query || !resultsContainer) return;
   
   try {
-    resultsContainer.innerHTML = '<div class="loading-container"><div class="loader"></div></div>';
+    resultsContainer.innerHTML = '<div class="loading"><div class="spinner"></div>Searching...</div>';
     
     const results = await AHX.files.search(query);
     
     if (results.length === 0) {
       resultsContainer.innerHTML = `
-        <div class="empty-search">
-          <div class="search-icon">🔍</div>
+        <div class="empty-state">
+          <div class="empty-icon">🔍</div>
           <p>No files found for "${query}"</p>
         </div>
       `;
@@ -1160,7 +1232,7 @@ AHX.view.performSearch = AHX.util.debounce(async () => {
     }
     
     resultsContainer.innerHTML = `
-      <div class="search-results-list">
+      <div style="display: grid; gap: 1rem;">
         ${results.map(file => `
           <div class="file-item" onclick="AHX.view.openFile('${file.id}')">
             <div class="file-icon">${AHX.view.getFileIcon(file.type)}</div>
@@ -1177,177 +1249,201 @@ AHX.view.performSearch = AHX.util.debounce(async () => {
       </div>
     `;
     
-    AHX.analytics.track('search_performed', { query, resultCount: results.length });
   } catch (error) {
-    AHX.util.handleError(error, 'view.performSearch');
-    resultsContainer.innerHTML = '<div class="error-message">Search failed. Please try again.</div>';
+    console.error('Search failed:', error);
+    resultsContainer.innerHTML = '<div class="error-state"><p>Search failed. Please try again.</p></div>';
   }
 }, 300);
 
-// =================== ANALYTICS PIPELINE ===================
-AHX.analytics.track = async (event, data = {}) => {
+// =================== HELPER FUNCTIONS ===================
+function updateUserDisplay() {
+  const userNameElement = document.getElementById('sidebarUserName');
+  if (userNameElement && AHX.state.user) {
+    userNameElement.textContent = AHX.state.user.name;
+  }
+}
+
+function updateNavigation(currentRoute) {
+  document.querySelectorAll('.nav-item').forEach(item => {
+    const route = item.getAttribute('data-route');
+    if (route === currentRoute) {
+      item.classList.add('active');
+    } else {
+      item.classList.remove('active');
+    }
+  });
+}
+
+function setupEventListeners() {
+  // FAB button
+  const fab = document.getElementById('fab');
+  if (fab) {
+    fab.addEventListener('click', () => AHX.ui.openUpload());
+  }
+  
+  // Upload subject dropdown
+  const uploadSubject = document.getElementById('uploadSubject');
+  if (uploadSubject) {
+    AHX.state.subjects.forEach(subject => {
+      const option = document.createElement('option');
+      option.value = subject.key;
+      option.textContent = `${subject.name} (${subject.code})`;
+      uploadSubject.appendChild(option);
+    });
+  }
+}
+
+function setupRouting() {
+  window.addEventListener('hashchange', AHX.view.render);
+  if (!location.hash) location.hash = '#/dashboard';
+}
+
+async function loadSubjects() {
   try {
-    const record = {
-      event,
-      data,
-      timestamp: Date.now(),
-      user: AHX.state.user?.id || 'anonymous',
-      session: Date.now().toString(36)
+    const response = await fetch('subjects.json');
+    if (response.ok) {
+      const subjects = await response.json();
+      AHX.state.subjects = [...subjects, ...AHX.state.subjects.filter(s => s.key === 'scanned')];
+    }
+  } catch (error) {
+    console.warn('Failed to load subjects.json:', error);
+  }
+}
+
+function setupDragAndDrop() {
+  const dropZone = document.getElementById('dropZone');
+  const fileInput = document.getElementById('uploadFiles');
+  
+  if (dropZone && fileInput) {
+    dropZone.addEventListener('click', () => fileInput.click());
+    
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.style.borderColor = 'var(--primary)';
+      dropZone.style.backgroundColor = 'rgba(0, 122, 255, 0.1)';
+    });
+    
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.style.borderColor = 'var(--gray-300)';
+      dropZone.style.backgroundColor = 'transparent';
+    });
+    
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.style.borderColor = 'var(--gray-300)';
+      dropZone.style.backgroundColor = 'transparent';
+      fileInput.files = e.dataTransfer.files;
+    });
+  }
+}
+
+function setupNetworkMonitoring() {
+  window.addEventListener('online', () => {
+    AHX.state.isOnline = true;
+    AHX.ui.showNotification('Connection restored', 'success', 3000);
+  });
+  
+  window.addEventListener('offline', () => {
+    AHX.state.isOnline = false;
+    AHX.ui.showNotification('You are offline', 'warning', 5000);
+  });
+}
+
+function toggleTheme() {
+  const root = document.documentElement;
+  const isDark = root.classList.contains('dark');
+  
+  if (isDark) {
+    root.classList.remove('dark');
+    AHX.state.theme = 'light';
+  } else {
+    root.classList.add('dark');
+    AHX.state.theme = 'dark';
+  }
+  
+  localStorage.setItem('ahx_theme', AHX.state.theme);
+}
+
+async function exportData() {
+  try {
+    const files = await AHX.files.all();
+    const data = {
+      version: APP_CONFIG.version,
+      exportDate: new Date().toISOString(),
+      user: AHX.state.user,
+      subjects: AHX.state.subjects,
+      files: files.map(f => ({
+        ...f,
+        blob: undefined // Don't export blobs
+      }))
     };
     
-    // Store locally
-    const tx = AHX.state.db?.transaction(['analytics'], 'readwrite');
-    if (tx) {
-      const store = tx.objectStore('analytics');
-      store.add(record);
-    }
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
     
-    console.log('Analytics:', event, data);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `academic-hub-x-export-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    
+    URL.revokeObjectURL(url);
+    AHX.ui.showNotification('Data exported successfully', 'success');
   } catch (error) {
-    console.warn('Analytics tracking failed:', error);
+    console.error('Export failed:', error);
+    AHX.ui.showNotification('Export failed', 'error');
   }
-};
+}
 
-// =================== INITIALIZATION PIPELINE ===================
-const initializeApp = async () => {
+// =================== FIXED CLEAR ALL DATA FUNCTION ===================
+async function clearAllData() {
+  if (!confirm('Are you sure you want to clear all local data? This cannot be undone.')) {
+    return;
+  }
+  
   try {
-    // Theme initialization
-    const savedTheme = localStorage.getItem('ahx_theme');
-    if (savedTheme === 'dark' || (!savedTheme && matchMedia('(prefers-color-scheme: dark)').matches)) {
-      document.documentElement.classList.add('dark');
-      AHX.state.theme = 'dark';
+    if (!AHX.state.db) {
+      throw new Error('Database not available');
     }
     
-    // Service worker registration
-    if ('serviceWorker' in navigator) {
-      try {
-        const registration = await navigator.serviceWorker.register('sw.js');
-        console.log('Service Worker registered:', registration);
-      } catch (error) {
-        console.warn('Service Worker registration failed:', error);
-      }
-    }
+    const tx = AHX.state.db.transaction(['files'], 'readwrite');
+    const store = tx.objectStore('files');
     
-    // Load subjects
-    try {
-      const response = await fetch('subjects.json');
-      if (response.ok) {
-        AHX.state.subjects = await response.json();
-      }
-    } catch (error) {
-      console.warn('Failed to load subjects:', error);
-      // Fallback subjects
-      AHX.state.subjects = [
-        { key: 'math', name: 'Mathematics', code: 'MATH', icon: '🔢' },
-        { key: 'science', name: 'Science', code: 'SCI', icon: '🔬' },
-        { key: 'english', name: 'English', code: 'ENG', icon: '📚' },
-        { key: 'scanned', name: 'Scanned Notes', code: 'SCAN', icon: '📷' }
-      ];
-    }
+    // Use the clear() method to remove all records
+    const clearRequest = store.clear();
     
-    // Open IndexedDB
-    try {
-      AHX.state.db = await AHX.files.openDB();
-    } catch (error) {
-      console.error('Failed to open IndexedDB:', error);
-      AHX.ui.showNotification('Local storage unavailable. Files will not persist.', 'warning');
-    }
-    
-    // Initialize UI
-    setupEventListeners();
-    
-    // Check authentication
-    AHX.state.user = AHX.auth.current();
-    if (!AHX.state.user) {
-      window.location.href = 'index.html';
-      return;
-    }
-    
-    // Setup routing
-    window.addEventListener('hashchange', AHX.view.render);
-    if (!location.hash) location.hash = '#/dashboard';
-    
-    // Initial render
-    await AHX.view.render();
-    
-    // Network status monitoring
-    window.addEventListener('online', () => {
-      AHX.state.isOnline = true;
-      AHX.ui.showNotification('Connection restored', 'success', 3000);
+    return new Promise((resolve, reject) => {
+      tx.oncomplete = async () => {
+        try {
+          AHX.ui.showNotification('All data cleared successfully', 'success');
+          await AHX.view.render();
+          resolve();
+        } catch (error) {
+          reject(error);
+        }
+      };
+      
+      tx.onerror = () => {
+        reject(new Error(`Transaction failed: ${tx.error?.message || 'Unknown error'}`));
+      };
+      
+      clearRequest.onerror = () => {
+        reject(new Error(`Clear operation failed: ${clearRequest.error?.message || 'Unknown error'}`));
+      };
     });
-    
-    window.addEventListener('offline', () => {
-      AHX.state.isOnline = false;
-      AHX.ui.showNotification('You are offline', 'warning', 3000);
-    });
-    
-    AHX.analytics.track('app_initialized');
     
   } catch (error) {
-    console.error('App initialization failed:', error);
-    AHX.ui.showNotification('Failed to initialize app. Please refresh.', 'error');
+    console.error('Clear all data failed:', error);
+    AHX.ui.showNotification('Failed to clear data: ' + error.message, 'error');
+    throw error;
   }
-};
+}
 
-const setupEventListeners = () => {
-  // Theme toggle
-  const themeBtn = document.getElementById('themeBtn');
-  if (themeBtn) themeBtn.addEventListener('click', AHX.ui.toggleTheme);
-  
-  // Install PWA
-  const installBtn = document.getElementById('installBtn');
-  if (installBtn) installBtn.addEventListener('click', AHX.ui.installPWA);
-  
-  // Logout
-  const logoutBtn = document.getElementById('logoutBtn');
-  if (logoutBtn) logoutBtn.addEventListener('click', AHX.auth.signOut);
-  
-  // Upload modal
-  const fabBtn = document.getElementById('fab');
-  if (fabBtn) fabBtn.addEventListener('click', () => AHX.ui.openUpload());
-  
-  // Search input
-  const searchInput = document.getElementById('searchInput');
-  if (searchInput) {
-    searchInput.addEventListener('input', AHX.view.performSearch);
-    searchInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') AHX.view.performSearch();
-    });
-  }
-  
-  // File drag and drop
-  setupDragAndDrop();
-};
-
-const setupDragAndDrop = () => {
-  const uploadArea = document.querySelector('.upload-area');
-  if (!uploadArea) return;
-  
-  uploadArea.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    uploadArea.classList.add('drag-over');
-  });
-  
-  uploadArea.addEventListener('dragleave', () => {
-    uploadArea.classList.remove('drag-over');
-  });
-  
-  uploadArea.addEventListener('drop', async (e) => {
-    e.preventDefault();
-    uploadArea.classList.remove('drag-over');
-    
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length) {
-      const fileInput = document.getElementById('uploadFiles');
-      if (fileInput) {
-        fileInput.files = e.dataTransfer.files;
-      }
-    }
-  });
-};
-
-// =================== APP BOOT ===================
-document.addEventListener('DOMContentLoaded', initializeApp);
-
-// Export for debugging
+// Export for debugging and global access
 window.AHX = AHX;
+
+// Make functions globally available for onclick handlers
+window.toggleTheme = toggleTheme;
+window.exportData = exportData;
+window.clearAllData = clearAllData;
+
+console.log('Academic Hub X app.js loaded successfully');
