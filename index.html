@@ -2237,7 +2237,731 @@
         `}
       `;
     }
-
-    function renderSearch() {
+        function renderSearch() {
       return `
         <div class="header">
+          <div>
+            <h1 class="header-title">Search Files</h1>
+            <p class="header-subtitle">Find your documents and notes quickly</p>
+          </div>
+        </div>
+        
+        <div class="card" style="margin-bottom: 2rem;">
+          <div style="display: flex; gap: 1rem;">
+            <input type="text" id="searchInput" placeholder="Search by filename, subject, or content..." style="flex: 1;" class="form-input" oninput="performSearch()" autofocus>
+            <button class="btn btn-primary" onclick="performSearch()">
+              <span>🔍</span>
+              Search
+            </button>
+          </div>
+        </div>
+        
+        <div id="searchResults">
+          <div class="empty-state">
+            <div class="empty-icon">🔍</div>
+            <p>Enter a search term to find your files</p>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderQRScanner() {
+      return `
+        <div class="header">
+          <div>
+            <h1 class="header-title">Smart Board QR Scanner</h1>
+            <p class="header-subtitle">Scan QR codes from your SRM KTR smart board to access slides</p>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div style="text-align: center; padding: 2rem;">
+            <div style="font-size: 4rem; margin-bottom: 2rem;">📱</div>
+            <h3>QR Scanner Ready</h3>
+            <p style="margin: 1rem 0 2rem 0; color: var(--text-secondary);">
+              Point your camera at the QR code displayed on the smart board to automatically access slides and content
+            </p>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+              <button class="btn btn-primary" onclick="openQRModal()" style="padding: 1rem 2rem;">
+                <span>📷</span>
+                Start QR Scanner
+              </button>
+              <button class="btn" onclick="selectFileAfterQR()" style="padding: 1rem 2rem;">
+                <span>📁</span>
+                Upload File Directly
+              </button>
+            </div>
+          </div>
+          
+          <div style="margin-top: 2rem; padding: 1.5rem; background: linear-gradient(135deg, var(--info), var(--primary)); color: white; border-radius: var(--radius-lg);">
+            <h4 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+              <span>💡</span> How it works:
+            </h4>
+            <ol style="margin: 0; padding-left: 1.2rem; line-height: 1.8;">
+              <li>Teacher displays QR code on smart board after class</li>
+              <li>Scan the QR code with your mobile device</li>
+              <li>Automatically redirected to slides/content</li>
+              <li>Return to upload and organize the file</li>
+              <li>Choose subject and rename for easy access</li>
+            </ol>
+          </div>
+        </div>
+      `;
+    }
+
+    // Enhanced SRM KTR Timetable Renderer
+    function renderTimetable() {
+      const timetable = AHX.state.timetable;
+      const srmSlots = AHX.state.srmTimetableSlots;
+      
+      // SRM KTR time slots
+      const timeSlots = [
+        '08:00-08:50', '08:50-09:40', '09:45-10:35', '10:40-11:30',
+        '11:35-12:25', '12:30-01:20', '01:25-02:15', '02:20-03:10',
+        '03:10-04:00', '04:00-04:50', '04:50-05:30', '05:30-06:10'
+      ];
+      
+      const days = ['Day 1 (Mon)', 'Day 2 (Tue)', 'Day 3 (Wed)', 'Day 4 (Thu)', 'Day 5 (Fri)'];
+      
+      if (!timetable) {
+        return `
+          <div class="header">
+            <div>
+              <h1 class="header-title">My Timetable</h1>
+              <p class="header-subtitle">SRM KTR Class Schedule</p>
+            </div>
+            <div class="header-actions">
+              <button class="btn btn-primary" onclick="openTimetableModal()">
+                <span>➕</span>
+                Setup Timetable
+              </button>
+            </div>
+          </div>
+          
+          <div class="empty-state">
+            <div class="empty-icon">📅</div>
+            <h3>Timetable Not Setup</h3>
+            <p>Configure your SRM KTR class schedule to view your daily timetable</p>
+            <button class="btn btn-primary" onclick="openTimetableModal()">Setup My Timetable</button>
+          </div>
+        `;
+      }
+      
+      return `
+        <div class="header">
+          <div>
+            <h1 class="header-title">My Timetable</h1>
+            <p class="header-subtitle">
+              ${timetable.department || 'CSE-AIML'} | Batch ${timetable.batchNumber || '2'} | 
+              Semester ${timetable.semester || '3'} | ${timetable.academicYear || '2025-26'}
+            </p>
+          </div>
+          <div class="header-actions">
+            <button class="btn" onclick="openTimetableModal()">
+              <span>✏️</span>
+              Edit Timetable
+            </button>
+          </div>
+        </div>
+        
+        <div class="timetable-container">
+          <h3 style="margin-bottom: 1rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+            <span>🗓️</span>
+            Weekly Schedule - SRM KTR
+          </h3>
+          
+          <table class="timetable-grid">
+            <thead>
+              <tr>
+                <th style="min-width: 100px;">Time</th>
+                ${days.map(day => `<th>${day}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${timeSlots.map((time, index) => `
+                <tr>
+                  <td style="font-weight: 600; background: var(--gray-100);">${time}</td>
+                  ${days.map((day, dayIndex) => {
+                    const dayKey = `Day${dayIndex + 1}`;
+                    const slotData = srmSlots[dayKey] && srmSlots[dayKey][index + 1];
+                    const subject = getSubjectForSlot(slotData);
+                    
+                    let slotClass = 'theory-slot';
+                    if (slotData && slotData.startsWith('P')) {
+                      slotClass = 'lab-slot';
+                    } else if (slotData && slotData.startsWith('L')) {
+                      slotClass = 'break-slot';
+                    }
+                    
+                    return `
+                      <td class="${slotClass}">
+                        <div class="timetable-slot">
+                          ${subject ? `
+                            <div class="slot-subject">${subject.name}</div>
+                            <div class="slot-room">${subject.code}</div>
+                            <div class="slot-teacher">${subject.teacher || 'Faculty'}</div>
+                          ` : `
+                            <div class="slot-subject">${slotData || 'Free'}</div>
+                          `}
+                        </div>
+                      </td>
+                    `;
+                  }).join('')}
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          
+          <div style="margin-top: 2rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <div style="width: 16px; height: 16px; background: linear-gradient(135deg, #e0f2fe, #b3e5fc); border-radius: 4px;"></div>
+              <span style="font-size: 0.9rem;">Theory Classes</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <div style="width: 16px; height: 16px; background: linear-gradient(135deg, #e8f5e8, #c8e6c9); border-radius: 4px;"></div>
+              <span style="font-size: 0.9rem;">Lab Sessions</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <div style="width: 16px; height: 16px; background: linear-gradient(135deg, #f3e5f5, #e1bee7); border-radius: 4px;"></div>
+              <span style="font-size: 0.9rem;">Break/Free</span>
+            </div>
+          </div>
+        </div>
+        
+        <div style="margin-top: 2rem; padding: 1.5rem; background: var(--success); color: white; border-radius: var(--radius-lg);">
+          <h4 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span>🎯</span>
+            Quick Tip
+          </h4>
+          <p style="margin: 0; line-height: 1.6;">
+            Use the QR scanner during class breaks to quickly save notes and materials shared by your professors. 
+            Your files will be automatically organized by subject for easy access during exams!
+          </p>
+        </div>
+      `;
+    }
+
+    function renderSettings() {
+      const totalFiles = AHX.state.files.length;
+      const totalSize = AHX.state.files.reduce((sum, file) => sum + (file.size || 0), 0);
+      
+      return `
+        <div class="header">
+          <div>
+            <h1 class="header-title">Settings</h1>
+            <p class="header-subtitle">Manage your Academic Hub X preferences</p>
+          </div>
+        </div>
+        
+        <div style="display: grid; gap: 2rem;">
+          <div class="card">
+            <h3 style="margin-bottom: 1rem; color: var(--text-primary);">Student Information</h3>
+            <div style="display: grid; gap: 1rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--gray-200);">
+                <div>
+                  <div style="font-weight: 600;">Name</div>
+                  <div style="color: var(--text-secondary); font-size: 0.9rem;">${AHX.state.user?.name || 'SRM KTR Student'}</div>
+                </div>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--gray-200);">
+                <div>
+                  <div style="font-weight: 600;">Email</div>
+                  <div style="color: var(--text-secondary); font-size: 0.9rem;">${AHX.state.user?.email || 'student@srmist.edu.in'}</div>
+                </div>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--gray-200);">
+                <div>
+                  <div style="font-weight: 600;">Registration Number</div>
+                  <div style="color: var(--text-secondary); font-size: 0.9rem;">${AHX.state.timetable?.regNumber || 'Not configured'}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card">
+            <h3 style="margin-bottom: 1rem; color: var(--text-primary);">Storage & Data</h3>
+            <div style="display: grid; gap: 1rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--gray-200);">
+                <div>
+                  <div style="font-weight: 600;">Total Files</div>
+                  <div style="color: var(--text-secondary); font-size: 0.9rem;">Documents stored locally</div>
+                </div>
+                <div style="font-weight: 600; color: var(--primary);">${totalFiles}</div>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--gray-200);">
+                <div>
+                  <div style="font-weight: 600;">Storage Used</div>
+                  <div style="color: var(--text-secondary); font-size: 0.9rem;">Space occupied by files</div>
+                </div>
+                <div style="font-weight: 600; color: var(--primary);">${formatBytes(totalSize)}</div>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--gray-200);">
+                <div>
+                  <div style="font-weight: 600;">Real-time Sync</div>
+                  <div style="color: var(--text-secondary); font-size: 0.9rem;">Live updates status</div>
+                </div>
+                <div style="font-weight: 600; color: ${AHX.state.realtimeChannel ? 'var(--success)' : 'var(--danger)'};">
+                  ${AHX.state.realtimeChannel ? '🟢 Connected' : '🔴 Offline'}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card">
+            <h3 style="margin-bottom: 1rem; color: var(--text-primary);">Preferences</h3>
+            <div style="display: grid; gap: 1rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--gray-200);">
+                <div>
+                  <div style="font-weight: 600;">Theme</div>
+                  <div style="color: var(--text-secondary); font-size: 0.9rem;">App appearance</div>
+                </div>
+                <button class="btn" onclick="toggleTheme()">
+                  <span>🌓</span>
+                  Toggle Theme
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card">
+            <h3 style="margin-bottom: 1rem; color: var(--text-primary);">Data Management</h3>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+              <button class="btn" onclick="exportData()">
+                <span>📥</span>
+                Export Data
+              </button>
+              <button class="btn btn-danger" onclick="clearAllData()">
+                <span>🗑️</span>
+                Clear All Data
+              </button>
+            </div>
+          </div>
+          
+          <div class="card">
+            <h3 style="margin-bottom: 1rem; color: var(--text-primary);">Account</h3>
+            <div>
+              <button class="btn btn-danger" onclick="signOut()">
+                <span>🚪</span>
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // =================== SEARCH OPERATIONS ===================
+    async function performSearch() {
+      const query = document.getElementById('searchInput')?.value?.trim();
+      const resultsContainer = document.getElementById('searchResults');
+      
+      if (!query || !resultsContainer) return;
+      
+      resultsContainer.innerHTML = `
+        <div class="loading">
+          <div class="spinner"></div>
+          <span>Searching...</span>
+        </div>
+      `;
+      
+      try {
+        const results = AHX.state.files.filter(file => 
+          file.name.toLowerCase().includes(query.toLowerCase()) ||
+          (file.description && file.description.toLowerCase().includes(query.toLowerCase())) ||
+          getSubjectName(file.subjectKey).toLowerCase().includes(query.toLowerCase())
+        );
+        
+        if (results.length === 0) {
+          resultsContainer.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-icon">🔍</div>
+              <h3>No files found</h3>
+              <p>No files match "${query}"</p>
+            </div>
+          `;
+          return;
+        }
+        
+        resultsContainer.innerHTML = `
+          <div style="margin-bottom: 1rem;">
+            <h3 style="color: var(--text-primary); margin: 0;">Found ${results.length} result(s)</h3>
+          </div>
+          <div style="display: grid; gap: 1rem;">
+            ${results.map(file => `
+              <div class="file-item" onclick="openFile('${file.id}')">
+                <div class="file-icon">${getFileIcon(file.type)}</div>
+                <div class="file-info">
+                  <div class="file-name">${file.name}</div>
+                  <div class="file-meta">${getSubjectName(file.subjectKey)} • ${formatDate(file.addedAt)}</div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+        
+      } catch (error) {
+        console.error('Search error:', error);
+        resultsContainer.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">⚠️</div>
+            <h3>Search failed</h3>
+            <p>Please try again</p>
+          </div>
+        `;
+      }
+    }
+
+    // =================== MOBILE-OPTIMIZED QR SCANNER ===================
+    async function openQRModal() {
+      document.getElementById('qrModal').classList.add('active');
+      await startQRScanner();
+    }
+
+    async function closeQRModal() {
+      document.getElementById('qrModal').classList.remove('active');
+      await stopQRScanner();
+    }
+
+    async function startQRScanner() {
+      try {
+        if (typeof Html5Qrcode === 'undefined') {
+          showNotification('QR Scanner library not loaded. Please refresh the page.', 'error');
+          return;
+        }
+        
+        // Stop any existing scanner
+        if (qrScanner) {
+          try {
+            await qrScanner.stop();
+            qrScanner.clear();
+          } catch (e) {
+            console.warn('Error stopping existing scanner:', e);
+          }
+        }
+        
+        qrScanner = new Html5Qrcode("qr-reader");
+        
+        // Get available cameras
+        const cameras = await Html5Qrcode.getCameras();
+        
+        if (!cameras.length) {
+          showNotification('No cameras found on your device', 'error');
+          return;
+        }
+        
+        // Prefer back camera for mobile devices
+        const camera = cameras.find(c => 
+          c.label.toLowerCase().includes('back') || 
+          c.label.toLowerCase().includes('rear') ||
+          c.label.toLowerCase().includes('environment')
+        ) || cameras[0];
+        
+        // Start scanner with mobile-optimized config
+        await qrScanner.start(
+          camera.id,
+          {
+            fps: 10,
+            qrbox: { width: 280, height: 280 },
+            aspectRatio: 1.0,
+            disableFlip: false,
+            videoConstraints: {
+              facingMode: 'environment' // Prefer back camera
+            }
+          },
+          onQRScanSuccess,
+          (error) => {
+            // Silent error handling for mobile
+            if (error.includes('QR code parse error')) {
+              return; // Ignore parse errors, normal during scanning
+            }
+            console.warn('QR Scanner error:', error);
+          }
+        );
+        
+        showNotification('📱 QR Scanner started! Point camera at QR code', 'success', 3000);
+        
+        // Auto-focus for better mobile experience
+        setTimeout(() => {
+          const video = document.querySelector('#qr-reader video');
+          if (video) {
+            video.setAttribute('autoplay', 'true');
+            video.setAttribute('muted', 'true');
+            video.setAttribute('playsinline', 'true'); // Important for iOS
+          }
+        }, 500);
+        
+      } catch (error) {
+        console.error('QR Scanner error:', error);
+        showNotification('Failed to start camera: ' + error.message, 'error');
+        closeQRModal();
+      }
+    }
+
+    async function stopQRScanner() {
+      try {
+        if (qrScanner) {
+          await qrScanner.stop();
+          qrScanner.clear();
+          qrScanner = null;
+        }
+      } catch (error) {
+        console.warn('QR scanner stop error:', error);
+      }
+    }
+
+    async function onQRScanSuccess(decodedText) {
+      try {
+        console.log('📱 QR Code scanned:', decodedText);
+        AHX.state.qrData = decodedText;
+        
+        // Vibrate on mobile if available
+        if (navigator.vibrate) {
+          navigator.vibrate(200);
+        }
+        
+        showNotification('✅ QR Code scanned successfully!', 'success');
+        
+        await closeQRModal();
+        
+        // Check if URL and redirect
+        if (decodedText.startsWith('http://') || decodedText.startsWith('https://')) {
+          if (confirm('QR Code contains a link. Do you want to open it?')) {
+            // Open in new tab to keep the app accessible
+            window.open(decodedText, '_blank');
+          }
+        }
+        
+        // Prompt user to upload file after viewing content
+        setTimeout(() => {
+          if (confirm('Would you like to upload a file related to this QR code?')) {
+            selectFileAfterQR();
+          }
+        }, 2000);
+        
+      } catch (error) {
+        console.error('QR processing error:', error);
+        showNotification('Failed to process QR code', 'error');
+      }
+    }
+
+    // =================== MOBILE OPTIMIZATIONS ===================
+    function setupMobileOptimizations() {
+      // Prevent zoom on input focus (iOS)
+      const viewportMeta = document.querySelector('meta[name="viewport"]');
+      if (viewportMeta) {
+        viewportMeta.setAttribute('content', 
+          'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no'
+        );
+      }
+      
+      // Add touch-friendly interactions
+      document.addEventListener('touchstart', function() {}, { passive: true });
+      
+      // Improve loading on mobile
+      if (window.innerWidth <= 768) {
+        // Reduce loading time on mobile
+        setTimeout(() => {
+          if (document.getElementById('loadingScreen')) {
+            hideLoadingScreen();
+          }
+        }, 1000); // Faster loading on mobile
+      }
+      
+      // Add PWA install prompt handling
+      let deferredPrompt;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        
+        // Show install notification
+        showNotification('📱 Install Academic Hub X as an app for better mobile experience!', 'info', 8000);
+      });
+    }
+
+    // =================== UTILITY FUNCTIONS COMPLETION ===================
+    function getSubjectForSlot(slotData) {
+      if (!slotData) return null;
+      
+      // Map SRM slot codes to your subjects
+      const slotMapping = {
+        'A': AHX.state.subjects.find(s => s.code === '21MAB201T'), // Transforms & BVP
+        'B': AHX.state.subjects.find(s => s.code === '21CSC201J'), // Data Structures
+        'C': AHX.state.subjects.find(s => s.code === '21CSS201T'), // Computer Org
+        'D': AHX.state.subjects.find(s => s.code === '21CSC203P'), // Advanced Programming
+        'E': AHX.state.subjects.find(s => s.code === '21CSC202J'), // Operating Systems
+        'F': AHX.state.subjects.find(s => s.code === '21CSC202J'), // Operating Systems
+        'G': AHX.state.subjects.find(s => s.code === '21LEM202T')  // UHV-II
+      };
+      
+      return slotMapping[slotData] || null;
+    }
+
+    function generateId() {
+      return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    }
+
+    function formatBytes(bytes) {
+      if (!bytes || bytes === 0) return '0 B';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+    }
+
+    function formatDate(timestamp) {
+      const date = new Date(timestamp);
+      const now = new Date();
+      const diff = now - date;
+      
+      if (diff < 60000) return 'Just now';
+      if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+      if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+      if (diff < 604800000) return `${Math.floor(diff / 86400000)}d ago`;
+      
+      return date.toLocaleDateString();
+    }
+
+    function getFileIcon(type) {
+      const icons = {
+        'application/pdf': '📄',
+        'application/msword': '📝',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '📝',
+        'application/vnd.ms-powerpoint': '📊',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation': '📊',
+        'image/jpeg': '🖼️',
+        'image/png': '🖼️',
+        'image/gif': '🖼️',
+        'text/plain': '📄',
+        'url': '🔗',
+        'note': '📝',
+        'scanned': '📷'
+      };
+      
+      return icons[type] || '📄';
+    }
+
+    function getSubjectName(key) {
+      const subject = AHX.state.subjects.find(s => s.key === key);
+      return subject ? subject.name : key;
+    }
+
+    // =================== THEME MANAGEMENT ===================
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.contains('dark');
+      
+      if (isDark) {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('ahx_theme', 'light');
+        showNotification('Switched to light theme', 'success', 2000);
+      } else {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('ahx_theme', 'dark');
+        showNotification('Switched to dark theme', 'success', 2000);
+      }
+      
+      // Apply text fixes after theme change
+      setTimeout(fixDarkModeText, 100);
+    }
+
+    // =================== SETUP AND EVENT LISTENERS ===================
+    function setupEventListeners() {
+      // Mobile optimizations
+      setupMobileOptimizations();
+      
+      // Keyboard shortcuts
+      document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+          e.preventDefault();
+          navigateTo('search');
+          setTimeout(() => {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) searchInput.focus();
+          }, 100);
+        }
+        
+        if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
+          e.preventDefault();
+          openUploadModal();
+        }
+        
+        if ((e.ctrlKey || e.metaKey) && e.key === 't') {
+          e.preventDefault();
+          toggleTheme();
+        }
+      });
+
+      // Setup FAB
+      const fab = document.getElementById('fab');
+      if (fab) {
+        fab.addEventListener('click', () => openUploadModal());
+      }
+    }
+
+    // =================== GLOBAL FUNCTION EXPORTS ===================
+    window.navigateTo = navigateTo;
+    window.navigateToSubject = navigateToSubject;
+    window.openFile = openFile;
+    window.deleteFile = deleteFile;
+    window.toggleTheme = toggleTheme;
+    window.exportData = exportData;
+    window.clearAllData = clearAllData;
+    window.signOut = signOut;
+    window.openUploadModal = openUploadModal;
+    window.closeUploadModal = closeUploadModal;
+    window.uploadFiles = uploadFiles;
+    window.openQRModal = openQRModal;
+    window.closeQRModal = closeQRModal;
+    window.selectFileAfterQR = selectFileAfterQR;
+    window.openRenameModal = openRenameModal;
+    window.closeRenameModal = closeRenameModal;
+    window.handleFileRename = handleFileRename;
+    window.performSearch = performSearch;
+    window.handleSignIn = handleSignIn;
+    window.handleSignUp = handleSignUp;
+    window.switchAuthTab = switchAuthTab;
+    window.openAuth = openAuth;
+    window.closeAuth = closeAuth;
+    window.openAddSubjectModal = openAddSubjectModal;
+    window.closeAddSubjectModal = closeAddSubjectModal;
+    window.handleAddSubject = handleAddSubject;
+    window.openTimetableModal = openTimetableModal;
+    window.closeTimetableModal = closeTimetableModal;
+    window.saveTimetable = saveTimetable;
+
+    // Initialize theme from localStorage
+    const savedTheme = localStorage.getItem('ahx_theme');
+    if (savedTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    }
+
+    // Apply initial text fixes
+    setTimeout(fixDarkModeText, 100);
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+      try {
+        if (AHX.state.realtimeChannel && supabase) {
+          supabase.removeChannel(AHX.state.realtimeChannel);
+        }
+        if (qrScanner) {
+          qrScanner.stop();
+        }
+      } catch (error) {
+        console.warn('Cleanup error:', error);
+      }
+    });
+
+    console.log('🎉 Academic Hub X for SRM KTR fully loaded!');
+    console.log('📱 Mobile optimized with enhanced QR scanner');
+    console.log('📚 SRM timetable integration complete');
+    console.log('🌓 Dark theme fixes applied');
+    console.log('⌨️ Shortcuts: Ctrl+K (search), Ctrl+U (upload), Ctrl+T (theme)');
+    console.log('🔑 Demo login: student@srmist.edu.in / srm2024');
+
+  </script>
+</body>
+</html>
+
+
+    
+
