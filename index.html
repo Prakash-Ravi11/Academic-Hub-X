@@ -1512,6 +1512,61 @@
         throw error;
       }
     }
+    // Enhanced file upload with Supabase Storage
+async function uploadFileToSupabase(file, fileName, subjectKey, description = '') {
+  try {
+    if (!AHX.state.user || !supabase) {
+      throw new Error('User not authenticated');
+    }
+
+    // Create unique file path under user's folder
+    const fileExt = file.name.split('.').pop();
+    const timestamp = Date.now();
+    const cleanName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const filePath = `${AHX.state.user.id}/${subjectKey}/${timestamp}-${cleanName}.${fileExt}`;
+
+    // Upload to Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('academic-files')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (uploadError) throw uploadError;
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from('academic-files')
+      .getPublicUrl(filePath);
+
+    // Save metadata to IndexedDB (for offline access)
+    const fileRecord = {
+      id: generateId(),
+      name: fileName,
+      originalName: file.name,
+      subjectKey: subjectKey,
+      type: file.type,
+      size: file.size,
+      addedAt: Date.now(),
+      description: description,
+      supabasePath: filePath,
+      publicUrl: urlData.publicUrl,
+      // Keep local blob for offline access
+      blob: file
+    };
+
+    await addFileToStorage(fileRecord);
+    AHX.state.files.unshift(fileRecord);
+
+    return fileRecord;
+
+  } catch (error) {
+    console.error('Supabase upload error:', error);
+    throw error;
+  }
+}
+
 
     // =================== AUTHENTICATION ===================
     function getCurrentUser() {
@@ -3091,4 +3146,5 @@
   </script>
 </body>
 </html>
+
 
