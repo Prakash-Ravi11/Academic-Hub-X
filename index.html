@@ -1485,46 +1485,387 @@
     }
 
     // =================== SUPABASE INITIALIZATION =================== 
-    async function initializeSupabase() {
-      try {
-        if (typeof window.supabase !== 'undefined') {
-          supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
-            auth: {
-              autoRefreshToken: true,
-              persistSession: true,
-              detectSessionInUrl: false
-            },
-            global: {
-              fetch: async (input, init) => {
-                try {
-                  if (!navigator.onLine) {
-                    throw new Error('No internet connection');
-                  }
-                  
-                  const response = await fetch(input, init);
-                  const contentType = response.headers.get('content-type');
-                  
-                  if (!response.ok && (!contentType || !contentType.includes('application/json'))) {
-                    throw new Error(`Service error: ${response.status}`);
-                  }
-                  
-                  return response;
-                } catch (error) {
-                  if (!navigator.onLine) {
-                    throw new Error('No internet connection');
-                  }
-                  throw error;
-                }
-              }
-            }
-          });
-          
-          console.log('✅ Supabase initialized with enhanced error handling');
-        }
-      } catch (error) {
-        console.warn('⚠️ Supabase initialization failed:', error);
-      }
+    // =================== REAL SUPABASE AUTHENTICATION ===================
+async function handleSignIn(event) {
+  event.preventDefault();
+  const email = document.getElementById('signin-email').value.trim();
+  const password = document.getElementById('signin-password').value;
+  const button = document.getElementById('signinBtn');
+  
+  button.disabled = true;
+  button.querySelector('span').textContent = 'Signing in...';
+  clearAuthMessages();
+  
+  try {
+    if (!navigator.onLine) {
+      throw new Error('No internet connection. Please check your network.');
     }
+    
+    if (!supabase) {
+      throw new Error('Authentication service not available.');
+    }
+    
+    // Real Supabase authentication
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: password
+    });
+    
+    if (error) {
+      throw new Error(error.message);
+    }
+    
+    if (data?.user && data?.session) {
+      // Store user data for app state
+      const userData = {
+        id: data.user.id,
+        email: data.user.email,
+        name: data.user.user_metadata?.full_name || data.user.email.split('@')[0],
+        regNumber: data.user.user_metadata?.regNumber || 'SRM Student'
+      };
+      
+      // Session is automatically persisted by Supabase client
+      localStorage.setItem('ahx_user', JSON.stringify(userData));
+      AHX.state.user = userData;
+      
+      showAuthMessage('Welcome back! Loading your dashboard...', 'success');
+      
+      setTimeout(() => {
+        closeAuth();
+        showApp();
+      }, 1500);
+    } else {
+      throw new Error('Authentication failed. Please try again.');
+    }
+    
+  } catch (error) {
+    console.error('Sign in error:', error);
+    let message = error.message;
+    
+    if (message.includes('Invalid login credentials')) {
+      message = 'Invalid email or password. Please check your credentials.';
+    } else if (message.includes('Email not confirmed')) {
+      message = 'Please verify your email address first.';
+    } else if (message.includes('Too many requests')) {
+      message = 'Too many login attempts. Please wait a few minutes.';
+    }
+    
+    showAuthMessage(message, 'error');
+  } finally {
+    button.disabled = false;
+    button.querySelector('span').textContent = 'Sign In';
+  }
+}
+
+async function handleSignUp(event) {
+  event.preventDefault();
+  const name = document.getElementById('signup-name').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  const password = document.getElementById('signup-password').value;
+  const button = document.getElementById('signupBtn');
+  
+  button.disabled = true;
+  button.querySelector('span').textContent = 'Creating account...';
+  clearAuthMessages();
+  
+  try {
+    if (!navigator.onLine) {
+      throw new Error('No internet connection. Please check your network.');
+    }
+    
+    if (!supabase) {
+      throw new Error('Authentication service not available.');
+    }
+    
+    const { data, error } = await supabase.auth.signUp({
+      email: email,
+      password: password,
+      options: {
+        data: {
+          full_name: name,
+          regNumber: 'SRM Student'
+        }
+      }
+    });
+    
+    if (error) {
+      throw new Error(error.message);
+    }
+    
+    if (data?.user) {
+      if (data.user.email_confirmed_at) {
+        // User is immediately confirmed (email confirmation disabled)
+        showAuthMessage('Account created successfully! You can now sign in.', 'success');
+      } else {
+        // Email confirmation required
+        showAuthMessage('Account created! Please check your email to verify your account before signing in.', 'success');
+      }
+      
+      setTimeout(() => switchAuthTab('signin'), 3000);
+    } else {
+      throw new Error('Failed to create account. Please try again.');
+    }
+    
+  } catch (error) {
+    console.error('Sign up error:', error);
+    let message = error.message;
+    
+    if (message.includes('User already registered')) {
+      message = 'An account with this email already exists. Please sign in instead.';
+    } else if (message.includes('Password should be')) {
+      message = 'Password must be at least 6 characters long.';
+    }
+    
+    showAuthMessage(message, 'error');
+  } finally {
+    button.disabled = false;
+    button.querySelector('span').textContent = 'Create Account';
+  }
+}
+
+// =================== SESSION MANAGEMENT ===================
+async function checkSession() {
+  try {
+    if (!supabase) {
+      showLanding();
+      return;
+    }
+    
+    // Get current session from Supabase
+    const { data: { session }, error } = await supabase.auth.getSession();
+    
+    if (error) {
+      console.warn('Session check error:', error);
+      showLanding();
+      return;
+    }
+    
+    if (session && session.user) {
+      // Valid session exists
+      const userData = {
+        id: session.user.id,
+        email: session.user.email,
+        name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
+        regNumber: session.user.user_metadata?.regNumber || 'SRM Student'
+      };
+      
+      localStorage.setItem('ahx_user', JSON.stringify(userData));
+      AHX.state.user = userData;
+      
+      return userData;
+    } else {
+      // No valid session
+      localStorage.removeItem('ahx_user');
+      AHX.state.user = null;
+      return null;
+    }
+    
+  } catch (error) {
+    console.error('Session check failed:', error);
+    localStorage.removeItem('ahx_user');
+    AHX.state.user = null;
+    return null;
+  }
+}
+
+// =================== UPDATED INITIALIZATION ===================
+async function initializeApp() {
+  try {
+    console.log('🚀 Initializing Academic Hub X for SRM KTR...');
+    
+    // Initialize Supabase first
+    await initializeSupabase();
+    
+    // Check authentication with real Supabase session
+    const user = await checkSession();
+    
+    if (!user) {
+      hideLoadingScreen();
+      showLanding();
+      return;
+    }
+    
+    console.log('✅ User authenticated:', user.name);
+    
+    // Initialize other services
+    await initializeDatabase();
+    await setupRealtimeSubscriptions();
+    
+    // Setup UI
+    setupEventListeners();
+    setupRouting();
+    setupDragDrop();
+    setupNetworkMonitoring();
+    
+    // Load user data
+    await loadCustomSubjects();
+    await loadUserFiles();
+    loadTimetable();
+    
+    // Apply theme fixes
+    setTimeout(fixDarkModeText, 100);
+    
+    // Show app
+    setTimeout(() => {
+      hideLoadingScreen();
+      showApp();
+      
+      // Check if new user needs timetable setup
+      if (!AHX.state.timetable && AHX.state.files.length === 0) {
+        setTimeout(() => openTimetableModal(), 2000);
+      }
+    }, 1000);
+    
+    console.log('✅ Academic Hub X initialized successfully');
+    
+  } catch (error) {
+    console.error('❌ App initialization failed:', error);
+    hideLoadingScreen();
+    showLanding();
+  }
+}
+
+// =================== AUTH STATE LISTENER ===================
+function setupAuthListener() {
+  if (!supabase) return;
+  
+  // Listen for auth state changes
+  supabase.auth.onAuthStateChange((event, session) => {
+    console.log('🔐 Auth state changed:', event);
+    
+    switch (event) {
+      case 'SIGNED_IN':
+        if (session?.user) {
+          const userData = {
+            id: session.user.id,
+            email: session.user.email,
+            name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
+            regNumber: session.user.user_metadata?.regNumber || 'SRM Student'
+          };
+          
+          localStorage.setItem('ahx_user', JSON.stringify(userData));
+          AHX.state.user = userData;
+          
+          // If user just signed in and app is showing landing page, show app
+          if (!document.getElementById('app').classList.contains('hidden') === false) {
+            showApp();
+          }
+        }
+        break;
+        
+      case 'SIGNED_OUT':
+        localStorage.removeItem('ahx_user');
+        AHX.state.user = null;
+        
+        // Show landing page if app is currently shown
+        if (!document.getElementById('landingPage').classList.contains('hidden') === false) {
+          showLanding();
+        }
+        break;
+        
+      case 'TOKEN_REFRESHED':
+        console.log('🔄 Token refreshed successfully');
+        break;
+    }
+  });
+}
+
+// =================== ENHANCED SIGN OUT ===================
+async function signOut() {
+  if (confirm('Are you sure you want to sign out?')) {
+    try {
+      // Clean up real-time subscriptions
+      if (AHX.state.realtimeChannel && supabase) {
+        supabase.removeChannel(AHX.state.realtimeChannel);
+      }
+      
+      // Sign out from Supabase (this will trigger the auth state change)
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.warn('Sign out error:', error);
+      }
+      
+      // Clear local storage
+      localStorage.removeItem('ahx_user');
+      localStorage.removeItem('ahx_custom_subjects');
+      localStorage.removeItem('ahx_timetable');
+      
+      // Reset state
+      AHX.state.user = null;
+      AHX.state.realtimeChannel = null;
+      
+      showNotification('Successfully signed out!', 'success');
+      
+      setTimeout(() => {
+        document.getElementById('app').classList.add('hidden');
+        document.getElementById('fab').classList.add('hidden');
+        showLanding();
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Sign out error:', error);
+      showNotification('Error during sign out', 'error');
+    }
+  }
+}
+
+// =================== ADD TO INITIALIZATION ===================
+// Update your initializeApp function to include auth listener
+async function initializeApp() {
+  try {
+    console.log('🚀 Initializing Academic Hub X for SRM KTR...');
+    
+    // Initialize Supabase first
+    await initializeSupabase();
+    
+    // Setup auth state listener
+    setupAuthListener();
+    
+    // Check authentication with real Supabase session
+    const user = await checkSession();
+    
+    if (!user) {
+      hideLoadingScreen();
+      showLanding();
+      return;
+    }
+    
+    console.log('✅ User authenticated:', user.name);
+    
+    // Continue with rest of initialization...
+    await initializeDatabase();
+    await setupRealtimeSubscriptions();
+    
+    setupEventListeners();
+    setupRouting();
+    setupDragDrop();
+    setupNetworkMonitoring();
+    
+    await loadCustomSubjects();
+    await loadUserFiles();
+    loadTimetable();
+    
+    setTimeout(fixDarkModeText, 100);
+    
+    setTimeout(() => {
+      hideLoadingScreen();
+      showApp();
+      
+      if (!AHX.state.timetable && AHX.state.files.length === 0) {
+        setTimeout(() => openTimetableModal(), 2000);
+      }
+    }, 1000);
+    
+    console.log('✅ Academic Hub X initialized successfully');
+    
+  } catch (error) {
+    console.error('❌ App initialization failed:', error);
+    hideLoadingScreen();
+    showLanding();
+  }
+}
+
 
     // =================== REALTIME SUBSCRIPTIONS ===================
     async function setupRealtimeSubscriptions() {
@@ -2964,4 +3305,5 @@
 
 
     
+
 
