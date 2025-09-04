@@ -3963,6 +3963,280 @@
                 console.warn('Failed to save file to local storage:', error);
             }
         }
+        // Add this enhanced file upload functionality to your existing code:
+
+// =================== COMPLETE OFFLINE FILE UPLOAD SYSTEM =================== 
+function openUploadModal(preSelectedSubject = '') {
+    // Create enhanced upload modal with drag & drop
+    if (!document.getElementById('uploadModal')) {
+        const modalHTML = `
+            <div id="uploadModal" class="modal">
+                <div class="modal-panel">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Neural Upload Portal</h3>
+                        <button onclick="closeUploadModal()" class="close-btn">×</button>
+                    </div>
+                    <div style="padding: 0 2rem 2rem 2rem;">
+                        <div class="form-group">
+                            <label class="form-label">Subject Matrix</label>
+                            <select id="uploadSubject" class="form-select">
+                                <option value="">Select neural subject...</option>
+                                ${AHX.state.subjects.map(subject => 
+                                    `<option value="${subject.key}">${subject.name} (${subject.code})</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">File Selection</label>
+                            <div class="upload-zone" id="dropZone" onclick="document.getElementById('uploadFiles').click()">
+                                <input type="file" id="uploadFiles" multiple accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.jpg,.png,.gif" style="display: none;" onchange="handleFileSelection(event)">
+                                <div class="upload-zone-icon">📁</div>
+                                <div style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">Drop files here or click to browse</div>
+                                <div style="font-size: 0.9rem; color: var(--text-secondary);">Supports PDF, DOC, PPT, images (max 50MB each)</div>
+                            </div>
+                            <div id="selectedFiles" style="margin-top: 1rem;"></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Neural Description (Optional)</label>
+                            <textarea id="uploadDescription" class="form-textarea" placeholder="Add notes about these files..." rows="3"></textarea>
+                        </div>
+                        
+                        <div class="modal-actions">
+                            <button class="btn btn-secondary" onclick="closeUploadModal()">Cancel</button>
+                            <button class="btn btn-primary" onclick="uploadFilesOffline()" id="uploadBtn">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="7,10 12,15 17,10"/>
+                                    <line x1="12" y1="15" x2="12" y2="3"/>
+                                </svg>
+                                <span>Upload Files</span>
+                            </button>
+                        </div>
+                        
+                        <div id="uploadProgress" style="display: none; margin-top: 1rem;">
+                            <div style="margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary);">Neural Processing...</div>
+                            <div style="width: 100%; height: 8px; background: var(--glass-bg); border-radius: var(--radius-full); overflow: hidden;">
+                                <div id="progressBar" style="height: 100%; background: var(--gradient-accent); width: 0%; transition: width 0.3s ease; border-radius: var(--radius-full);"></div>
+                            </div>
+                            <div id="progressText" style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">Preparing quantum files...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        setupDragAndDrop();
+    }
+    
+    // Reset and show modal
+    AHX.state.selectedFiles = [];
+    document.getElementById('uploadSubject').value = preSelectedSubject;
+    document.getElementById('selectedFiles').innerHTML = '';
+    document.getElementById('uploadDescription').value = '';
+    document.getElementById('uploadProgress').style.display = 'none';
+    
+    document.getElementById('uploadModal').classList.add('active');
+}
+
+function handleFileSelection(event) {
+    const files = Array.from(event.target.files);
+    AHX.state.selectedFiles = [...AHX.state.selectedFiles, ...files];
+    displaySelectedFiles();
+}
+
+function displaySelectedFiles() {
+    const container = document.getElementById('selectedFiles');
+    
+    if (AHX.state.selectedFiles.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    container.innerHTML = `
+        <div style="margin-top: 1rem;">
+            <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary);">Neural Files Selected (${AHX.state.selectedFiles.length}):</div>
+            <div style="display: grid; gap: 0.5rem;">
+                ${AHX.state.selectedFiles.map((file, index) => `
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; background: var(--glass-bg); border-radius: var(--radius-lg); font-size: 0.9rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <span style="font-size: 1.2rem;">${getFileIcon(file.type)}</span>
+                            <div>
+                                <div style="font-weight: 500; color: var(--text-primary);">${file.name}</div>
+                                <div style="color: var(--text-secondary); font-size: 0.8rem;">${formatBytes(file.size)}</div>
+                            </div>
+                        </div>
+                        <button onclick="removeSelectedFile(${index})" style="background: none; border: none; color: var(--error); cursor: pointer; padding: 0.25rem; font-size: 1.2rem; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" title="Remove">×</button>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function removeSelectedFile(index) {
+    AHX.state.selectedFiles.splice(index, 1);
+    displaySelectedFiles();
+}
+
+// **WORKING OFFLINE FILE UPLOAD**
+async function uploadFilesOffline() {
+    const subjectKey = document.getElementById('uploadSubject').value;
+    const description = document.getElementById('uploadDescription').value.trim();
+    const uploadBtn = document.getElementById('uploadBtn');
+    const progressContainer = document.getElementById('uploadProgress');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    
+    if (!subjectKey) {
+        showNotification('Please select a neural subject', 'warning');
+        return;
+    }
+    
+    if (AHX.state.selectedFiles.length === 0) {
+        showNotification('Please select files to upload', 'warning');
+        return;
+    }
+    
+    // Show loading state
+    uploadBtn.disabled = true;
+    uploadBtn.querySelector('span').textContent = 'Neural Processing...';
+    progressContainer.style.display = 'block';
+    
+    try {
+        const uploadedFiles = [];
+        
+        for (let i = 0; i < AHX.state.selectedFiles.length; i++) {
+            const file = AHX.state.selectedFiles[i];
+            
+            // Update progress
+            const progress = ((i + 1) / AHX.state.selectedFiles.length) * 100;
+            progressBar.style.width = progress + '%';
+            progressText.textContent = `Processing ${file.name} (${i + 1}/${AHX.state.selectedFiles.length})...`;
+            
+            // Create file record with actual file blob for offline storage
+            const fileRecord = {
+                id: generateId(),
+                name: file.name,
+                originalName: file.name,
+                subjectKey: subjectKey,
+                type: file.type,
+                size: file.size,
+                addedAt: Date.now(),
+                description: description,
+                blob: file, // Store actual file blob for offline access
+                isCloudStored: false,
+                syncPending: true // Mark for cloud sync when online
+            };
+            
+            uploadedFiles.push(fileRecord);
+            
+            // Add to state immediately
+            AHX.state.files.unshift(fileRecord);
+            
+            // Save to IndexedDB for persistence
+            await addFileToStorage(fileRecord);
+            
+            // If online, attempt cloud upload
+            if (AHX.state.isOnline && supabase && AHX.state.user) {
+                try {
+                    await uploadToCloud(fileRecord);
+                } catch (error) {
+                    console.warn('Cloud upload failed, keeping local copy:', error);
+                }
+            }
+        }
+        
+        showNotification(`✅ Successfully processed ${uploadedFiles.length} neural file(s)! ${AHX.state.isOnline ? 'Synced to cloud.' : 'Will sync when online.'}`, 'success');
+        closeUploadModal();
+        refreshCurrentView();
+        
+    } catch (error) {
+        console.error('Upload error:', error);
+        showNotification('Neural upload failed: ' + error.message, 'error');
+    } finally {
+        uploadBtn.disabled = false;
+        uploadBtn.querySelector('span').textContent = 'Upload Files';
+        progressContainer.style.display = 'none';
+    }
+}
+
+// Enhanced drag and drop functionality
+function setupDragAndDrop() {
+    const dropZone = document.getElementById('dropZone');
+    
+    if (dropZone) {
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+        
+        function highlight() {
+            dropZone.style.borderColor = 'var(--primary)';
+            dropZone.style.background = 'rgba(102, 126, 234, 0.1)';
+        }
+        
+        function unhighlight() {
+            dropZone.style.borderColor = 'var(--glass-border)';
+            dropZone.style.background = 'var(--glass-bg)';
+        }
+        
+        dropZone.addEventListener('drop', handleDrop, false);
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            AHX.state.selectedFiles = [...AHX.state.selectedFiles, ...Array.from(files)];
+            displaySelectedFiles();
+            
+            showNotification(`Added ${files.length} files to neural queue`, 'success', 2000);
+        }
+    }
+}
+
+// Enhanced file opening with offline support
+async function openFile(id) {
+    try {
+        const file = AHX.state.files.find(f => f.id === id);
+        if (!file) {
+            showNotification('Neural file not found', 'error');
+            return;
+        }
+        
+        showNotification('Opening neural file...', 'info', 2000);
+        
+        // Try different methods to open the file
+        if (file.publicUrl && file.isCloudStored && AHX.state.isOnline) {
+            // Cloud file - open URL
+            window.open(file.publicUrl, '_blank', 'noopener,noreferrer');
+        } else if (file.blob) {
+            // Local file - create blob URL
+            const url = URL.createObjectURL(file.blob);
+            window.open(url, '_blank', 'noopener,noreferrer');
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } else {
+            showNotification('Neural file content not available offline', 'warning');
+        }
+    } catch (error) {
+        console.error('Failed to open file:', error);
+        showNotification('Failed to open neural file: ' + error.message, 'error');
+    }
+}
+
 
         // =================== GLOBAL FUNCTION EXPORTS =================== 
         window.navigateTo = navigateTo;
@@ -4017,4 +4291,5 @@
     </script>
 </body>
 </html>
+
 
