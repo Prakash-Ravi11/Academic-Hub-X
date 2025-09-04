@@ -3317,6 +3317,50 @@
                 resetQRScanner();
             }
         }
+        // =================== ENHANCED CONNECTIVITY MANAGEMENT =================== 
+async function syncPendingFiles() {
+    if (!AHX.state.isOnline || !supabase || !AHX.state.user) return;
+    
+    const pendingFiles = AHX.state.files.filter(f => f.syncPending);
+    
+    if (pendingFiles.length === 0) return;
+    
+    showNotification(`🔄 Syncing ${pendingFiles.length} files to neural cloud...`, 'info');
+    
+    for (const file of pendingFiles) {
+        try {
+            await uploadToCloud(file);
+            file.syncPending = false;
+            file.isCloudStored = true;
+            
+            // Update in IndexedDB
+            await updateFileInStorage(file);
+            
+        } catch (error) {
+            console.error('Failed to sync file:', file.name, error);
+        }
+    }
+    
+    showNotification('✅ Files synced to neural cloud!', 'success');
+    refreshCurrentView();
+}
+
+// Enhanced online/offline event handlers
+window.addEventListener('online', async () => {
+    AHX.state.isOnline = true;
+    showNotification('🌐 Neural network reconnected! Syncing data...', 'success', 3000);
+    
+    if (supabase && AHX.state.user) {
+        await setupRealtimeSync();
+        await syncPendingFiles();
+    }
+});
+
+window.addEventListener('offline', () => {
+    AHX.state.isOnline = false;
+    showNotification('📱 Offline mode activated. All files stored locally until reconnection.', 'warning', 5000);
+});
+
 
         async function stopNeuralQRScan() {
             try {
@@ -4291,5 +4335,6 @@ async function openFile(id) {
     </script>
 </body>
 </html>
+
 
 
