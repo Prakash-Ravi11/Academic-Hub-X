@@ -1,0 +1,40 @@
+{
+  "name": "academic-hub-x",
+  "version": "1.0.0",
+  "description": "Academic Hub X - SRM KTR Student Portal",
+  "main": "index.html",
+  "scripts": {
+    "dev": "python -m http.server 3000",
+    "build": "npm run minify && npm run optimize",
+    "minify": "terser js/main.js -o js/main.min.js && cleancss style.css -o style.min.css",
+    "optimize": "imagemin icons/* --out-dir=dist/icons",
+    "deploy:netlify": "netlify deploy --prod --dir=.",
+    "deploy:vercel": "vercel --prod",
+    "deploy:github": "git push origin main",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "keywords": [
+    "academic",
+    "student-portal",
+    "file-management",
+    "qr-scanner",
+    "pwa",
+    "education",
+    "srm-university"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "terser": "^5.19.0",
+    "clean-css-cli": "^5.6.0",
+    "imagemin-cli": "^7.0.0",
+    "netlify-cli": "^15.0.0",
+    "vercel": "^32.0.0"
+  },
+  "browserslist": [
+    "defaults",
+    "not IE 11",
+    "not IE_Mob 11"
+  ]
+}
