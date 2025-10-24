@@ -3,280 +3,3624 @@
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Academic Hub X</title>
-  <meta name="description" content="Complete academic management solution for students" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Academic Hub X - Smart Study Management</title>
+  <meta name="description" content="Complete academic management solution for students with file management, progress tracking, and collaborative tools" />
+  <meta name="theme-color" content="#667eea" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="manifest.json" />
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  
   <style>
+    /* ============================================
+       CSS VARIABLES & THEME SYSTEM
+       ============================================ */
     :root {
+      /* Primary Colors */
       --primary: #667eea;
+      --primary-dark: #5568d3;
+      --primary-light: #8fa3ff;
+      --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      
+      /* Accent Colors */
       --accent: #64b6ff;
-      --danger: #ff6767;
+      --accent-dark: #4a9ae0;
+      --accent-light: #8fd3ff;
+      
+      /* Semantic Colors */
       --success: #43e97b;
+      --success-dark: #38c66a;
+      --success-light: #6fffa0;
+      --warning: #feca57;
+      --warning-dark: #e5b34f;
+      --warning-light: #ffd97d;
+      --danger: #ff6b6b;
+      --danger-dark: #ee5a52;
+      --danger-light: #ff8787;
+      --info: #4ecdc4;
+      --info-dark: #3db8af;
+      --info-light: #6ee7de;
+      
+      /* Neutral Colors */
       --bg: #f6f8fb;
-      --bg-dark: #161c25;
-      --text: #232846;
-      --text-light: #fdfdfd;
-      --radius: 12px;
-      --shadow: 0 2px 14px 0 rgba(0,0,0,.08);
-      --transition: .2s cubic-bezier(.65,0,.23,1);
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #fafbfc;
+      --bg-elevated: #ffffff;
+      --text: #2d3748;
+      --text-secondary: #718096;
+      --text-tertiary: #a0aec0;
+      --text-inverse: #ffffff;
+      --border: #e2e8f0;
+      --border-light: #edf2f7;
+      --border-dark: #cbd5e0;
+      
+      /* Overlay */
+      --overlay: rgba(0, 0, 0, 0.5);
+      --overlay-light: rgba(0, 0, 0, 0.3);
+      --overlay-dark: rgba(0, 0, 0, 0.7);
+      
+      /* Shadows */
+      --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+      --shadow-colored: 0 8px 16px -4px rgba(102, 126, 234, 0.25);
+      
+      /* Spacing Scale */
+      --spacing-xs: 0.25rem;
+      --spacing-sm: 0.5rem;
+      --spacing-md: 1rem;
+      --spacing-lg: 1.5rem;
+      --spacing-xl: 2rem;
+      --spacing-2xl: 3rem;
+      --spacing-3xl: 4rem;
+      --spacing-4xl: 6rem;
+      
+      /* Border Radius */
+      --radius-xs: 4px;
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+      --radius-full: 9999px;
+      
+      /* Transitions */
+      --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-bounce: 500ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      
+      /* Z-Index Scale */
+      --z-base: 1;
+      --z-dropdown: 1000;
+      --z-sticky: 1020;
+      --z-fixed: 1030;
+      --z-modal-backdrop: 1040;
+      --z-modal: 1050;
+      --z-popover: 1060;
+      --z-tooltip: 1070;
+      --z-notification: 1080;
+      
+      /* Typography */
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+      --font-weight-light: 300;
+      --font-weight-normal: 400;
+      --font-weight-medium: 500;
+      --font-weight-semibold: 600;
+      --font-weight-bold: 700;
+      --font-weight-extrabold: 800;
+      --font-weight-black: 900;
+      
+      /* Line Heights */
+      --leading-none: 1;
+      --leading-tight: 1.25;
+      --leading-snug: 1.375;
+      --leading-normal: 1.5;
+      --leading-relaxed: 1.625;
+      --leading-loose: 2;
+      
+      /* Letter Spacing */
+      --tracking-tighter: -0.05em;
+      --tracking-tight: -0.025em;
+      --tracking-normal: 0;
+      --tracking-wide: 0.025em;
+      --tracking-wider: 0.05em;
+      --tracking-widest: 0.1em;
     }
+    
+    /* Dark Theme Variables */
     [data-theme="dark"] {
-      --bg: #161c25;
-      --text: #f6f8fb;
-      --card: #232846;
+      --bg: #1a202c;
+      --bg-secondary: #2d3748;
+      --bg-tertiary: #252f3f;
+      --bg-elevated: #2d3748;
+      --text: #f7fafc;
+      --text-secondary: #cbd5e0;
+      --text-tertiary: #a0aec0;
+      --text-inverse: #2d3748;
+      --border: #4a5568;
+      --border-light: #3a4556;
+      --border-dark: #5a6678;
+      --overlay: rgba(0, 0, 0, 0.7);
+      --overlay-light: rgba(0, 0, 0, 0.5);
+      --overlay-dark: rgba(0, 0, 0, 0.85);
+      --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+      --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+      --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      --shadow-colored: 0 8px 16px -4px rgba(102, 126, 234, 0.4);
     }
-
+    
+    /* ============================================
+       RESET & BASE STYLES
+       ============================================ */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    html {
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+      scroll-behavior: smooth;
+    }
+    
     body {
-      font-family: 'Inter', sans-serif;
-      background: var(--bg);
+      font-family: var(--font-sans);
+      font-weight: var(--font-weight-normal);
+      line-height: var(--leading-normal);
       color: var(--text);
-      margin: 0; padding: 0;
+      background-color: var(--bg);
+      min-height: 100vh;
+      overflow-x: hidden;
+      transition: background-color var(--transition-base), color var(--transition-base);
     }
-    header {
-      display: flex; justify-content: space-between; align-items: center;
-      background: var(--primary);
-      color: #fff;
-      padding: 1rem 2rem;
-      box-shadow: var(--shadow);
+    
+    img, picture, video, canvas, svg {
+      display: block;
+      max-width: 100%;
+      height: auto;
     }
-    header h1 {
-      font-size: 1.8rem; margin: 0;
-      letter-spacing: 1px;
+    
+    input, button, textarea, select {
+      font: inherit;
+      color: inherit;
     }
-    nav {
-      display: flex; gap: 1rem;
+    
+    button {
+      cursor: pointer;
+      border: none;
+      background: none;
     }
-    nav button {
-      background: var(--accent);
-      color: #fff;
-      border: none; border-radius: var(--radius);
-      padding: .5rem 1rem;
-      font-weight: 600; cursor: pointer;
-      box-shadow: var(--shadow);
-      transition: box-shadow var(--transition), background var(--transition);
+    
+    a {
+      color: inherit;
+      text-decoration: none;
     }
-    nav button:hover {
-      background: var(--primary);
+    
+    ul, ol {
+      list-style: none;
     }
+    
+    h1, h2, h3, h4, h5, h6 {
+      font-weight: var(--font-weight-bold);
+      line-height: var(--leading-tight);
+    }
+    
+    /* ============================================
+       UTILITY CLASSES
+       ============================================ */
     .container {
-      max-width: 1200px;
+      width: 100%;
+      max-width: 1280px;
       margin: 0 auto;
-      padding: 2rem 1rem;
+      padding: 0 var(--spacing-md);
     }
-    .dashboard-grid {
-      display: grid;
-      gap: 2rem;
-      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-      margin-bottom: 2rem;
+    
+    .flex {
+      display: flex;
     }
-    .card {
-      background: #fff;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 1.5rem 1.25rem;
-      transition: box-shadow var(--transition), background var(--transition);
+    
+    .flex-col {
+      flex-direction: column;
     }
-    .card:hover { box-shadow: 0 6px 24px 0 rgba(0,0,0,.08); }
-    .card-title {
-      font-size: 1.2rem;
-      font-weight: 600;
-      margin-bottom: .5rem;
+    
+    .items-center {
+      align-items: center;
     }
-    .card-content {
+    
+    .justify-center {
+      justify-content: center;
+    }
+    
+    .justify-between {
+      justify-content: space-between;
+    }
+    
+    .gap-sm {
+      gap: var(--spacing-sm);
+    }
+    
+    .gap-md {
+      gap: var(--spacing-md);
+    }
+    
+    .gap-lg {
+      gap: var(--spacing-lg);
+    }
+    
+    .hidden {
+      display: none !important;
+    }
+    
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+    
+    /* ============================================
+       LOADING SPINNER
+       ============================================ */
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      background-color: var(--overlay);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: var(--z-notification);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity var(--transition-base), visibility var(--transition-base);
+    }
+    
+    .loading-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: var(--radius-full);
+      animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* ============================================
+       NAVIGATION BAR
+       ============================================ */
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: var(--z-sticky);
+      background-color: var(--bg-elevated);
+      border-bottom: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      transition: all var(--transition-base);
+    }
+    
+    .navbar-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--spacing-md);
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+    
+    .navbar-brand {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      font-size: 1.5rem;
+      font-weight: var(--font-weight-bold);
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .navbar-menu {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-lg);
+    }
+    
+    .navbar-link {
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--radius-md);
+      font-weight: var(--font-weight-medium);
+      color: var(--text-secondary);
+      transition: all var(--transition-base);
+      position: relative;
+    }
+    
+    .navbar-link:hover {
+      color: var(--primary);
+      background-color: var(--bg-tertiary);
+    }
+    
+    .navbar-link.active {
+      color: var(--primary);
+      background-color: var(--bg-tertiary);
+    }
+    
+    .navbar-link.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40%;
+      height: 2px;
+      background-color: var(--primary);
+    }
+    
+    .navbar-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+    }
+    
+    .navbar-search {
+      position: relative;
+    }
+    
+    .navbar-search input {
+      padding: var(--spacing-sm) var(--spacing-md);
+      padding-left: var(--spacing-xl);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      background-color: var(--bg-tertiary);
+      width: 240px;
+      transition: all var(--transition-base);
+    }
+    
+    .navbar-search input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: var(--shadow-colored);
+      width: 280px;
+    }
+    
+    .navbar-search-icon {
+      position: absolute;
+      left: var(--spacing-md);
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-tertiary);
+      pointer-events: none;
+    }
+    
+    .theme-toggle {
+      padding: var(--spacing-sm);
+      border-radius: var(--radius-md);
+      background-color: var(--bg-tertiary);
+      color: var(--text-secondary);
+      transition: all var(--transition-base);
+    }
+    
+    .theme-toggle:hover {
+      color: var(--primary);
+      background-color: var(--bg);
+      transform: rotate(15deg);
+    }
+    
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-full);
+      background: var(--primary-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-inverse);
+      font-weight: var(--font-weight-bold);
+      cursor: pointer;
+      transition: all var(--transition-base);
+    }
+    
+    .user-avatar:hover {
+      box-shadow: var(--shadow-colored);
+      transform: scale(1.05);
+    }
+    
+    /* Mobile Navigation */
+    .navbar-toggle {
+      display: none;
+      flex-direction: column;
+      gap: 4px;
+      padding: var(--spacing-sm);
+    }
+    
+    .navbar-toggle span {
+      width: 24px;
+      height: 3px;
+      background-color: var(--text);
+      border-radius: var(--radius-full);
+      transition: all var(--transition-base);
+    }
+    
+    /* ============================================
+       SIDEBAR
+       ============================================ */
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 65px;
+      bottom: 0;
+      width: 280px;
+      background-color: var(--bg-elevated);
+      border-right: 1px solid var(--border);
+      padding: var(--spacing-lg);
+      overflow-y: auto;
+      z-index: var(--z-fixed);
+      transition: transform var(--transition-base);
+    }
+    
+    .sidebar-section {
+      margin-bottom: var(--spacing-xl);
+    }
+    
+    .sidebar-title {
+      font-size: 0.75rem;
+      font-weight: var(--font-weight-bold);
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: var(--tracking-wider);
+      margin-bottom: var(--spacing-md);
+    }
+    
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      padding: var(--spacing-md);
+      border-radius: var(--radius-md);
+      color: var(--text-secondary);
+      font-weight: var(--font-weight-medium);
+      transition: all var(--transition-base);
+      cursor: pointer;
+    }
+    
+    .sidebar-item:hover {
+      background-color: var(--bg-tertiary);
+      color: var(--primary);
+      transform: translateX(4px);
+    }
+    
+    .sidebar-item.active {
+      background-color: var(--bg-tertiary);
+      color: var(--primary);
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .sidebar-icon {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .sidebar-badge {
+      margin-left: auto;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      font-size: 0.75rem;
+      font-weight: var(--font-weight-bold);
+      background-color: var(--primary);
+      color: var(--text-inverse);
+    }
+    
+    /* ============================================
+       MAIN CONTENT AREA
+       ============================================ */
+    .main-content {
+      margin-left: 280px;
+      margin-top: 65px;
+      min-height: calc(100vh - 65px);
+      padding: var(--spacing-xl);
+      transition: margin-left var(--transition-base);
+    }
+    
+    .page-header {
+      margin-bottom: var(--spacing-xl);
+    }
+    
+    .page-title {
+      font-size: 2rem;
+      font-weight: var(--font-weight-bold);
+      margin-bottom: var(--spacing-sm);
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .page-subtitle {
+      color: var(--text-secondary);
       font-size: 1rem;
-      color: #444;
-      margin-bottom: .8rem;
     }
-
-    /* Files section grid/list */
-    .files-section {
-      background: #fff;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 2rem 1.25rem;
-      margin-bottom: 2rem;
+    
+    .page-actions {
+      display: flex;
+      gap: var(--spacing-md);
+      margin-top: var(--spacing-lg);
     }
-    .files-grid {
+    
+    /* ============================================
+       CARDS & PANELS
+       ============================================ */
+    .card {
+      background-color: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-lg);
+      box-shadow: var(--shadow-sm);
+      transition: all var(--transition-base);
+    }
+    
+    .card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+    
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--spacing-lg);
+      padding-bottom: var(--spacing-md);
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: var(--font-weight-bold);
+    }
+    
+    .card-body {
+      flex: 1;
+    }
+    
+    .card-footer {
+      margin-top: var(--spacing-lg);
+      padding-top: var(--spacing-md);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    /* ============================================
+       GRID LAYOUTS
+       ============================================ */
+    .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 1rem;
+      gap: var(--spacing-lg);
     }
-    .file-card {
-      background: var(--bg);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 1rem;
-      display: flex; flex-direction: column;
-      gap: .5rem;
-      transition: box-shadow var(--transition), background var(--transition);
+    
+    .grid-cols-1 {
+      grid-template-columns: repeat(1, minmax(0, 1fr));
     }
-    .file-card:hover {
-      background: var(--accent);
-      color: #fff;
-      box-shadow: 0 4px 12px 0 rgba(0,0,0,.12);
+    
+    .grid-cols-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-    footer {
+    
+    .grid-cols-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    
+    .grid-cols-4 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+    
+    .grid-auto-fit {
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+    
+    .grid-auto-fill {
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+    
+    /* ============================================
+       STATISTICS CARDS
+       ============================================ */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: var(--spacing-lg);
+      margin-bottom: var(--spacing-xl);
+    }
+    
+    .stat-card {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-lg);
+      box-shadow: var(--shadow-sm);
+      transition: all var(--transition-base);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--primary-gradient);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform var(--transition-base);
+    }
+    
+    .stat-card:hover::before {
+      transform: scaleX(1);
+    }
+    
+    .stat-card:hover {
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-4px);
+    }
+    
+    .stat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--spacing-md);
+    }
+    
+    .stat-label {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      font-weight: var(--font-weight-medium);
+    }
+    
+    .stat-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--primary-gradient);
+      color: var(--text-inverse);
+      font-size: 1.25rem;
+    }
+    
+    .stat-value {
+      font-size: 2rem;
+      font-weight: var(--font-weight-bold);
+      margin-bottom: var(--spacing-xs);
+    }
+    
+    .stat-change {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      font-size: 0.875rem;
+      font-weight: var(--font-weight-medium);
+    }
+    
+    .stat-change.positive {
+      color: var(--success);
+    }
+    
+    .stat-change.negative {
+      color: var(--danger);
+    }
+    
+    /* ============================================
+       BUTTONS
+       ============================================ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-sm) var(--spacing-lg);
+      border-radius: var(--radius-md);
+      font-weight: var(--font-weight-medium);
+      font-size: 0.875rem;
+      line-height: 1;
+      transition: all var(--transition-base);
+      cursor: pointer;
+      border: none;
+      outline: none;
+      white-space: nowrap;
+    }
+    
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .btn-primary {
+      background: var(--primary-gradient);
+      color: var(--text-inverse);
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .btn-primary:hover:not(:disabled) {
+      box-shadow: var(--shadow-colored);
+      transform: translateY(-2px);
+    }
+    
+    .btn-primary:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    
+    .btn-secondary {
+      background-color: var(--bg-tertiary);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    
+    .btn-secondary:hover:not(:disabled) {
+      background-color: var(--bg);
+      border-color: var(--primary);
+    }
+    
+    .btn-success {
+      background-color: var(--success);
+      color: var(--text-inverse);
+    }
+    
+    .btn-success:hover:not(:disabled) {
+      background-color: var(--success-dark);
+      box-shadow: 0 4px 12px rgba(67, 233, 123, 0.3);
+    }
+    
+    .btn-danger {
+      background-color: var(--danger);
+      color: var(--text-inverse);
+    }
+    
+    .btn-danger:hover:not(:disabled) {
+      background-color: var(--danger-dark);
+      box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+    }
+    
+    .btn-ghost {
+      background-color: transparent;
+      color: var(--text-secondary);
+    }
+    
+    .btn-ghost:hover:not(:disabled) {
+      background-color: var(--bg-tertiary);
+      color: var(--text);
+    }
+    
+    .btn-icon {
+      padding: var(--spacing-sm);
+      width: 36px;
+      height: 36px;
+    }
+    
+    .btn-sm {
+      padding: var(--spacing-xs) var(--spacing-md);
+      font-size: 0.75rem;
+    }
+    
+    .btn-lg {
+      padding: var(--spacing-md) var(--spacing-xl);
+      font-size: 1rem;
+    }
+    
+    /* ============================================
+       FORMS & INPUTS
+       ============================================ */
+    .form-group {
+      margin-bottom: var(--spacing-lg);
+    }
+    
+    .form-label {
+      display: block;
+      margin-bottom: var(--spacing-sm);
+      font-weight: var(--font-weight-medium);
+      color: var(--text);
+      font-size: 0.875rem;
+    }
+    
+    .form-label-required::after {
+      content: '*';
+      color: var(--danger);
+      margin-left: var(--spacing-xs);
+    }
+    
+    .form-input,
+    .form-textarea,
+    .form-select {
+      width: 100%;
+      padding: var(--spacing-md);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background-color: var(--bg-tertiary);
+      color: var(--text);
+      font-size: 0.875rem;
+      transition: all var(--transition-base);
+    }
+    
+    .form-input:focus,
+    .form-textarea:focus,
+    .form-select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: var(--shadow-colored);
+    }
+    
+    .form-input::placeholder,
+    .form-textarea::placeholder {
+      color: var(--text-tertiary);
+    }
+    
+    .form-textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+    
+    .form-error {
+      margin-top: var(--spacing-xs);
+      font-size: 0.75rem;
+      color: var(--danger);
+    }
+    
+    .form-hint {
+      margin-top: var(--spacing-xs);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+    
+    .form-checkbox,
+    .form-radio {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      cursor: pointer;
+    }
+    
+    .form-checkbox input,
+    .form-radio input {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: var(--primary);
+    }
+    
+    /* ============================================
+       FILE UPLOAD
+       ============================================ */
+    .file-upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-2xl);
       text-align: center;
-      background: var(--primary); color: #fff;
-      padding: 1rem; font-size: .95rem; letter-spacing: 1px;
-      border-top-left-radius: var(--radius);
-      border-top-right-radius: var(--radius);
-      box-shadow: var(--shadow);
-      margin-top: 2rem;
+      transition: all var(--transition-base);
+      cursor: pointer;
+      background-color: var(--bg-tertiary);
     }
-    @media (max-width: 900px) {
-      .dashboard-grid { grid-template-columns: 1fr; gap: 1.2rem; }
-      .files-grid { grid-template-columns: 1fr; }
+    
+    .file-upload-zone:hover {
+      border-color: var(--primary);
+      background-color: var(--bg);
     }
-    @media (max-width: 600px) {
-      header { flex-direction: column; align-items: start; }
-      .container { padding: .75rem; }
-      .dashboard-grid, .files-grid { grid-template-columns: 1fr; }
-      .card, .files-section { padding: 1rem; }
+    
+    .file-upload-zone.drag-over {
+      border-color: var(--primary);
+      background-color: rgba(102, 126, 234, 0.1);
+      transform: scale(1.02);
+    }
+    
+    .file-upload-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto var(--spacing-lg);
+      background: var(--primary-gradient);
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-inverse);
+      font-size: 2rem;
+    }
+    
+    .file-upload-text {
+      font-weight: var(--font-weight-medium);
+      margin-bottom: var(--spacing-sm);
+    }
+    
+    .file-upload-hint {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+    
+    .file-list {
+      margin-top: var(--spacing-lg);
+    }
+    
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      padding: var(--spacing-md);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--spacing-sm);
+      background-color: var(--bg-elevated);
+      transition: all var(--transition-base);
+    }
+    
+    .file-item:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateX(4px);
+    }
+    
+    .file-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-md);
+      background: var(--primary-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-inverse);
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+    
+    .file-info {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .file-name {
+      font-weight: var(--font-weight-medium);
+      margin-bottom: var(--spacing-xs);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .file-meta {
+      display: flex;
+      gap: var(--spacing-md);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+    
+    .file-actions {
+      display: flex;
+      gap: var(--spacing-sm);
+      flex-shrink: 0;
+    }
+    
+    /* ============================================
+       MODALS
+       ============================================ */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background-color: var(--overlay);
+      z-index: var(--z-modal-backdrop);
+      opacity: 0;
+      visibility: hidden;
+      transition: all var(--transition-base);
+      backdrop-filter: blur(4px);
+    }
+    
+    .modal-backdrop.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: var(--z-modal);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--spacing-md);
+      opacity: 0;
+      visibility: hidden;
+      transition: all var(--transition-base);
+    }
+    
+    .modal.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .modal-content {
+      background-color: var(--bg-elevated);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-2xl);
+      width: 100%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transform: scale(0.9) translateY(20px);
+      transition: transform var(--transition-bounce);
+    }
+    
+    .modal.active .modal-content {
+      transform: scale(1) translateY(0);
+    }
+    
+    .modal-header {
+      padding: var(--spacing-lg);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .modal-title {
+      font-size: 1.5rem;
+      font-weight: var(--font-weight-bold);
+    }
+    
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      transition: all var(--transition-base);
+    }
+    
+    .modal-close:hover {
+      background-color: var(--bg-tertiary);
+      color: var(--danger);
+    }
+    
+    .modal-body {
+      padding: var(--spacing-lg);
+      overflow-y: auto;
+      flex: 1;
+    }
+    
+    .modal-footer {
+      padding: var(--spacing-lg);
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: var(--spacing-md);
+      justify-content: flex-end;
+    }
+    
+    /* ============================================
+       TABLES
+       ============================================ */
+    .table-container {
+      overflow-x: auto;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+    }
+    
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: var(--bg-elevated);
+    }
+    
+    .table thead {
+      background-color: var(--bg-tertiary);
+      border-bottom: 2px solid var(--border);
+    }
+    
+    .table th {
+      padding: var(--spacing-md);
+      text-align: left;
+      font-weight: var(--font-weight-semibold);
+      color: var(--text);
+      font-size: 0.875rem;
+      white-space: nowrap;
+    }
+    
+    .table td {
+      padding: var(--spacing-md);
+      border-bottom: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+    
+    .table tbody tr {
+      transition: background-color var(--transition-base);
+    }
+    
+    .table tbody tr:hover {
+      background-color: var(--bg-tertiary);
+    }
+    
+    .table tbody tr:last-child td {
+      border-bottom: none;
+    }
+    
+    /* ============================================
+       BADGES & TAGS
+       ============================================ */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      font-size: 0.75rem;
+      font-weight: var(--font-weight-medium);
+      line-height: 1;
+    }
+    
+    .badge-primary {
+      background-color: rgba(102, 126, 234, 0.15);
+      color: var(--primary);
+    }
+    
+    .badge-success {
+      background-color: rgba(67, 233, 123, 0.15);
+      color: var(--success);
+    }
+    
+    .badge-warning {
+      background-color: rgba(254, 202, 87, 0.15);
+      color: var(--warning);
+    }
+    
+    .badge-danger {
+      background-color: rgba(255, 107, 107, 0.15);
+      color: var(--danger);
+    }
+    
+    .badge-info {
+      background-color: rgba(78, 205, 196, 0.15);
+      color: var(--info);
+    }
+    
+    /* ============================================
+       PROGRESS BARS
+       ============================================ */
+    .progress {
+      width: 100%;
+      height: 8px;
+      background-color: var(--bg-tertiary);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .progress-bar {
+      height: 100%;
+      background: var(--primary-gradient);
+      border-radius: var(--radius-full);
+      transition: width var(--transition-slow);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .progress-bar::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+      );
+      animation: shimmer 2s infinite;
+    }
+    
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+    
+    /* ============================================
+       NOTIFICATIONS / TOASTS
+       ============================================ */
+    .toast-container {
+      position: fixed;
+      top: 80px;
+      right: var(--spacing-lg);
+      z-index: var(--z-notification);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+      max-width: 400px;
+    }
+    
+    .toast {
+      background-color: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-lg);
+      box-shadow: var(--shadow-xl);
+      display: flex;
+      align-items: flex-start;
+      gap: var(--spacing-md);
+      animation: slideIn 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .toast::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+    }
+    
+    .toast.toast-success::before {
+      background-color: var(--success);
+    }
+    
+    .toast.toast-error::before {
+      background-color: var(--danger);
+    }
+    
+    .toast.toast-warning::before {
+      background-color: var(--warning);
+    }
+    
+    .toast.toast-info::before {
+      background-color: var(--info);
+    }
+    
+    @keyframes slideIn {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    
+    .toast-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    
+    .toast-success .toast-icon {
+      background-color: var(--success);
+      color: var(--text-inverse);
+    }
+    
+    .toast-error .toast-icon {
+      background-color: var(--danger);
+      color: var(--text-inverse);
+    }
+    
+    .toast-warning .toast-icon {
+      background-color: var(--warning);
+      color: var(--text-inverse);
+    }
+    
+    .toast-info .toast-icon {
+      background-color: var(--info);
+      color: var(--text-inverse);
+    }
+    
+    .toast-content {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .toast-title {
+      font-weight: var(--font-weight-semibold);
+      margin-bottom: var(--spacing-xs);
+    }
+    
+    .toast-message {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+    
+    .toast-close {
+      width: 24px;
+      height: 24px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      transition: all var(--transition-base);
+      flex-shrink: 0;
+    }
+    
+    .toast-close:hover {
+      background-color: var(--bg-tertiary);
+      color: var(--text);
+    }
+    
+    /* ============================================
+       DROPDOWNS
+       ============================================ */
+    .dropdown {
+      position: relative;
+    }
+    
+    .dropdown-toggle {
+      cursor: pointer;
+    }
+    
+    .dropdown-menu {
+      position: absolute;
+      top: calc(100% + var(--spacing-sm));
+      right: 0;
+      min-width: 200px;
+      background-color: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-xl);
+      padding: var(--spacing-sm);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: all var(--transition-base);
+      z-index: var(--z-dropdown);
+    }
+    
+    .dropdown.active .dropdown-menu {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+    
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      padding: var(--spacing-md);
+      border-radius: var(--radius-md);
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all var(--transition-base);
+    }
+    
+    .dropdown-item:hover {
+      background-color: var(--bg-tertiary);
+      color: var(--text);
+    }
+    
+    .dropdown-divider {
+      height: 1px;
+      background-color: var(--border);
+      margin: var(--spacing-sm) 0;
+    }
+    
+    /* ============================================
+       TABS
+       ============================================ */
+    .tabs {
+      display: flex;
+      gap: var(--spacing-sm);
+      border-bottom: 1px solid var(--border);
+      margin-bottom: var(--spacing-xl);
+    }
+    
+    .tab {
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-bottom: 2px solid transparent;
+      color: var(--text-secondary);
+      font-weight: var(--font-weight-medium);
+      cursor: pointer;
+      transition: all var(--transition-base);
+      position: relative;
+    }
+    
+    .tab:hover {
+      color: var(--text);
+      background-color: var(--bg-tertiary);
+      border-radius: var(--radius-md) var(--radius-md) 0 0;
+    }
+    
+    .tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+      animation: fadeIn var(--transition-base);
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    /* ============================================
+       EMPTY STATES
+       ============================================ */
+    .empty-state {
+      text-align: center;
+      padding: var(--spacing-3xl) var(--spacing-lg);
+    }
+    
+    .empty-state-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto var(--spacing-lg);
+      border-radius: var(--radius-full);
+      background: var(--bg-tertiary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      color: var(--text-tertiary);
+    }
+    
+    .empty-state-title {
+      font-size: 1.5rem;
+      font-weight: var(--font-weight-bold);
+      margin-bottom: var(--spacing-sm);
+    }
+    
+    .empty-state-description {
+      color: var(--text-secondary);
+      margin-bottom: var(--spacing-lg);
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    
+    /* ============================================
+       AVATARS
+       ============================================ */
+    .avatar {
+      border-radius: var(--radius-full);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: var(--font-weight-bold);
+      background: var(--primary-gradient);
+      color: var(--text-inverse);
+    }
+    
+    .avatar-sm {
+      width: 32px;
+      height: 32px;
+      font-size: 0.875rem;
+    }
+    
+    .avatar-md {
+      width: 40px;
+      height: 40px;
+      font-size: 1rem;
+    }
+    
+    .avatar-lg {
+      width: 56px;
+      height: 56px;
+      font-size: 1.25rem;
+    }
+    
+    .avatar-xl {
+      width: 80px;
+      height: 80px;
+      font-size: 1.75rem;
+    }
+    
+    /* ============================================
+       RESPONSIVE DESIGN
+       ============================================ */
+    @media (max-width: 1024px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      
+      .sidebar.mobile-open {
+        transform: translateX(0);
+      }
+      
+      .main-content {
+        margin-left: 0;
+      }
+      
+      .navbar-toggle {
+        display: flex;
+      }
+      
+      .navbar-menu {
+        position: fixed;
+        top: 65px;
+        left: 0;
+        right: 0;
+        background-color: var(--bg-elevated);
+        border-bottom: 1px solid var(--border);
+        flex-direction: column;
+        padding: var(--spacing-lg);
+        transform: translateY(-100%);
+        transition: transform var(--transition-base);
+      }
+      
+      .navbar-menu.mobile-open {
+        transform: translateY(0);
+      }
+      
+      .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      }
+      
+      .grid-cols-2,
+      .grid-cols-3,
+      .grid-cols-4 {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .navbar-search {
+        display: none;
+      }
+      
+      .navbar-brand {
+        font-size: 1.25rem;
+      }
+      
+      .page-title {
+        font-size: 1.5rem;
+      }
+      
+      .page-actions {
+        flex-direction: column;
+      }
+      
+      .modal-content {
+        margin: var(--spacing-md);
+      }
+      
+      .toast-container {
+        left: var(--spacing-md);
+        right: var(--spacing-md);
+        max-width: none;
+      }
+      
+      .stat-value {
+        font-size: 1.5rem;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      :root {
+        font-size: 14px;
+      }
+      
+      .main-content {
+        padding: var(--spacing-md);
+      }
+      
+      .card {
+        padding: var(--spacing-md);
+      }
+      
+      .navbar-container {
+        padding: var(--spacing-sm) var(--spacing-md);
+      }
+      
+      .btn {
+        width: 100%;
+      }
+      
+      .page-actions .btn {
+        width: 100%;
+      }
+    }
+    
+    /* ============================================
+       SCROLLBAR STYLING
+       ============================================ */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background-color: var(--bg);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background-color: var(--border-dark);
+      border-radius: var(--radius-full);
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background-color: var(--text-tertiary);
+    }
+    
+    /* ============================================
+       PRINT STYLES
+       ============================================ */
+    @media print {
+      .navbar,
+      .sidebar,
+      .navbar-toggle,
+      .page-actions,
+      .btn,
+      .modal,
+      .toast-container {
+        display: none !important;
+      }
+      
+      .main-content {
+        margin-left: 0;
+        margin-top: 0;
+      }
+    }
+    
+    /* ============================================
+       ACCESSIBILITY
+       ============================================ */
+    .focus-visible:focus {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+    
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+    
+    /* ============================================
+       CUSTOM COMPONENTS
+       ============================================ */
+    .subject-card {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .subject-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--primary-gradient);
+    }
+    
+    .subject-header {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-lg);
+    }
+    
+    .subject-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-md);
+      background: var(--primary-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-inverse);
+      font-size: 1.5rem;
+    }
+    
+    .subject-info {
+      flex: 1;
+    }
+    
+    .subject-name {
+      font-weight: var(--font-weight-bold);
+      font-size: 1.125rem;
+      margin-bottom: var(--spacing-xs);
+    }
+    
+    .subject-code {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+    
+    .subject-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-lg);
+    }
+    
+    .subject-stat {
+      text-align: center;
+    }
+    
+    .subject-stat-value {
+      font-size: 1.5rem;
+      font-weight: var(--font-weight-bold);
+      display: block;
+    }
+    
+    .subject-stat-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: var(--spacing-xs);
+    }
+    
+    .file-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: var(--spacing-md);
+    }
+    
+    .file-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-md);
+      text-align: center;
+      transition: all var(--transition-base);
+      cursor: pointer;
+    }
+    
+    .file-card:hover {
+      border-color: var(--primary);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-4px);
+    }
+    
+    .file-card-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto var(--spacing-md);
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+    }
+    
+    .file-card-name {
+      font-weight: var(--font-weight-medium);
+      font-size: 0.875rem;
+      margin-bottom: var(--spacing-xs);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .file-card-size {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+    
+    /* ============================================
+       ANIMATIONS
+       ============================================ */
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.5;
+      }
+    }
+    
+    @keyframes bounce {
+      0%, 100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-10px);
+      }
+    }
+    
+    @keyframes slideInRight {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    
+    @keyframes slideInLeft {
+      from {
+        transform: translateX(-100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    
+    .animate-pulse {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    
+    .animate-bounce {
+      animation: bounce 1s infinite;
+    }
+    
+    /* ============================================
+       CALENDAR STYLES
+       ============================================ */
+    .calendar {
+      background-color: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-lg);
+    }
+    
+    .calendar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--spacing-lg);
+    }
+    
+    .calendar-title {
+      font-size: 1.25rem;
+      font-weight: var(--font-weight-bold);
+    }
+    
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: var(--spacing-sm);
+    }
+    
+    .calendar-day-header {
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-secondary);
+      padding: var(--spacing-sm);
+    }
+    
+    .calendar-day {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition-base);
+      position: relative;
+    }
+    
+    .calendar-day:hover {
+      background-color: var(--bg-tertiary);
+    }
+    
+    .calendar-day.today {
+      background-color: var(--primary);
+      color: var(--text-inverse);
+      font-weight: var(--font-weight-bold);
+    }
+    
+    .calendar-day.has-event::after {
+      content: '';
+      position: absolute;
+      bottom: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 4px;
+      border-radius: var(--radius-full);
+      background-color: var(--success);
+    }
+    
+    /* ============================================
+       ADDITIONAL UTILITY CLASSES
+       ============================================ */
+    .text-center {
+      text-align: center;
+    }
+    
+    .text-right {
+      text-align: right;
+    }
+    
+    .text-left {
+      text-align: left;
+    }
+    
+    .font-bold {
+      font-weight: var(--font-weight-bold);
+    }
+    
+    .font-medium {
+      font-weight: var(--font-weight-medium);
+    }
+    
+    .text-sm {
+      font-size: 0.875rem;
+    }
+    
+    .text-xs {
+      font-size: 0.75rem;
+    }
+    
+    .text-lg {
+      font-size: 1.125rem;
+    }
+    
+    .text-xl {
+      font-size: 1.25rem;
+    }
+    
+    .text-primary {
+      color: var(--primary);
+    }
+    
+    .text-success {
+      color: var(--success);
+    }
+    
+    .text-danger {
+      color: var(--danger);
+    }
+    
+    .text-warning {
+      color: var(--warning);
+    }
+    
+    .text-secondary {
+      color: var(--text-secondary);
+    }
+    
+    .mb-sm {
+      margin-bottom: var(--spacing-sm);
+    }
+    
+    .mb-md {
+      margin-bottom: var(--spacing-md);
+    }
+    
+    .mb-lg {
+      margin-bottom: var(--spacing-lg);
+    }
+    
+    .mt-sm {
+      margin-top: var(--spacing-sm);
+    }
+    
+    .mt-md {
+      margin-top: var(--spacing-md);
+    }
+    
+    .mt-lg {
+      margin-top: var(--spacing-lg);
+    }
+    
+    .w-full {
+      width: 100%;
+    }
+    
+    .h-full {
+      height: 100%;
+    }
+    
+    .relative {
+      position: relative;
+    }
+    
+    .absolute {
+      position: absolute;
+    }
+    
+    .overflow-hidden {
+      overflow: hidden;
+    }
+    
+    .overflow-auto {
+      overflow: auto;
+    }
+    
+    .pointer {
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Academic Hub X</h1>
-    <nav>
-      <button id="toggle-theme" aria-label="Toggle Theme">Theme</button>
-      <button id="download-files">Download</button>
-      <button id="profile">Profile</button>
-    </nav>
-  </header>
-  <div class="container">
-    <section class="dashboard-grid" id="dashboard">
-      <!-- Dynamic dashboard cards inserted by JS -->
-    </section>
-    <section class="files-section" id="files">
-      <div class="files-grid" id="files-grid">
-        <!-- Dynamic files appear here -->
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="navbar-container">
+      <div class="flex items-center gap-md">
+        <button class="navbar-toggle" id="navbarToggle" aria-label="Toggle navigation">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+        <a href="#" class="navbar-brand">
+          <span>📚</span>
+          <span>Academic Hub X</span>
+        </a>
       </div>
-    </section>
-  </div>
-  <footer>
-    © 2025 Academic Hub X. All Rights Reserved.
-  </footer>
 
- <script>
-  // Theme toggle
-  const themeToggleBtn = document.getElementById('toggle-theme');
-  themeToggleBtn.addEventListener('click', () => {
-    const currentTheme = document.documentElement.getAttribute('data-theme');
-    if (currentTheme === 'dark') {
-      document.documentElement.removeAttribute('data-theme');
-      localStorage.setItem('theme', 'light');
-    } else {
-      document.documentElement.setAttribute('data-theme', 'dark');
-      localStorage.setItem('theme', 'dark');
-    }
-  });
+      <div class="navbar-menu" id="navbarMenu">
+        <a href="#" class="navbar-link active" data-page="dashboard">Dashboard</a>
+        <a href="#" class="navbar-link" data-page="subjects">Subjects</a>
+        <a href="#" class="navbar-link" data-page="files">Files</a>
+        <a href="#" class="navbar-link" data-page="calendar">Calendar</a>
+        <a href="#" class="navbar-link" data-page="analytics">Analytics</a>
+      </div>
 
-  // Load saved theme on page load
-  window.addEventListener('DOMContentLoaded', () => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    }
-    renderDashboard();
-    renderFiles();
-  });
-
-  // Sample dashboard data (replace with real dynamic data)
-  const dashboardData = [
-    { title: 'Upcoming Exams', content: 'Oct 10, Maths' },
-    { title: 'Assignments', content: 'ML Project due Oct 12' },
-    { title: 'News', content: 'New version of Academic Hub released!' },
-  ];
-
-  // Render dashboard cards
-  function renderDashboard() {
-    const dashboard = document.getElementById('dashboard');
-    dashboard.innerHTML = '';
-    dashboardData.forEach(card => {
-      const cardDiv = document.createElement('div');
-      cardDiv.classList.add('card');
-      cardDiv.innerHTML = `<h3 class="card-title">${card.title}</h3><p class="card-content">${card.content}</p>`;
-      dashboard.appendChild(cardDiv);
-    });
-  }
-
-  // Sample files data (replace with backend or dynamic fetch)
-  const sampleFiles = [
-    { name: 'Calculus Notes.pdf', type: 'pdf', date: '2025-09-15' },
-    { name: 'MachineLearning.ipynb', type: 'notebook', date: '2025-10-01' },
-    { name: 'Chemistry_Lab_Report.docx', type: 'document', date: '2025-09-20' },
-  ];
-
-  // Render files list/grid
-  function renderFiles() {
-    const filesGrid = document.getElementById('files-grid');
-    filesGrid.innerHTML = '';
-    sampleFiles.forEach(file => {
-      const fileCard = document.createElement('div');
-      fileCard.classList.add('file-card');
-      fileCard.innerHTML = `
-        <strong>${file.name}</strong>
-        <div>Type: ${file.type}</div>
-        <div>Modified: ${file.date}</div>
-      `;
-      filesGrid.appendChild(fileCard);
-    });
-  }
-
-    
-
-// File Upload and Preview
-document.getElementById('files-section').insertAdjacentHTML('beforeend', `
-  <div class="upload-zone" id="upload-zone">
-    <input type="file" id="file-upload" multiple style="display:none">
-    <button class="upload-btn" onclick="document.getElementById('file-upload').click()">Upload Files</button>
-    <div id="preview"></div>
-  </div>
-`);
-
-// Handle uploads and preview
-document.getElementById('file-upload').addEventListener('change', function(e) {
-  const preview = document.getElementById('preview');
-  preview.innerHTML = '';
-  Array.from(e.target.files).forEach(file => {
-    const div = document.createElement('div');
-    div.className = 'file-preview-item';
-    div.innerHTML = `<strong>${file.name}</strong> (${Math.round(file.size/1024)} KB)`;
-    preview.appendChild(div);
-    // Optionally upload with AJAX here...
-  });
-});
-
-// User Notification System
-function notify(message, type='info') {
-  let note = document.createElement('div');
-  note.textContent = message;
-  note.className = `notification ${type}`;
-  document.body.appendChild(note);
-  setTimeout(() => note.remove(), 3000);
-}
-
-// Usage example:
-notify('File uploaded successfully!', 'success');
-
-// User Profile Modal
-document.getElementById('profile').addEventListener('click', function() {
-  let modal = document.createElement('div');
-  modal.className = 'modal';
-  modal.innerHTML = `
-    <div class="modal-content">
-      <h2>User Profile</h2>
-      <label>Name: <input type="text" value="R.RPRAKASH RAVI"></label>
-      <label>Email: <input type="email" value="prakash@example.com"></label>
-      <button onclick="this.closest('.modal').remove()">Close</button>
+      <div class="navbar-actions">
+        <div class="navbar-search">
+          <input type="text" placeholder="Search..." id="globalSearch" />
+          <span class="navbar-search-icon">🔍</span>
+        </div>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <span id="themeIcon">🌙</span>
+        </button>
+        <div class="dropdown" id="userDropdown">
+          <div class="user-avatar dropdown-toggle" id="userAvatar">JD</div>
+          <div class="dropdown-menu">
+            <div class="dropdown-item" onclick="showProfile()">
+              <span>👤</span>
+              <span>Profile</span>
+            </div>
+            <div class="dropdown-item" onclick="showSettings()">
+              <span>⚙️</span>
+              <span>Settings</span>
+            </div>
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-item" onclick="logout()">
+              <span>🚪</span>
+              <span>Logout</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-  `;
-  document.body.appendChild(modal);
-});
+  </nav>
 
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-section">
+      <h3 class="sidebar-title">Main Menu</h3>
+      <div class="sidebar-item active" data-page="dashboard">
+        <span class="sidebar-icon">📊</span>
+        <span>Dashboard</span>
+      </div>
+      <div class="sidebar-item" data-page="subjects">
+        <span class="sidebar-icon">📖</span>
+        <span>Subjects</span>
+        <span class="sidebar-badge">5</span>
+      </div>
+      <div class="sidebar-item" data-page="files">
+        <span class="sidebar-icon">📁</span>
+        <span>My Files</span>
+        <span class="sidebar-badge">24</span>
+      </div>
+      <div class="sidebar-item" data-page="calendar">
+        <span class="sidebar-icon">📅</span>
+        <span>Calendar</span>
+      </div>
+      <div class="sidebar-item" data-page="analytics">
+        <span class="sidebar-icon">📈</span>
+        <span>Analytics</span>
+      </div>
+    </div>
 
-<script>
+    <div class="sidebar-section">
+      <h3 class="sidebar-title">Quick Actions</h3>
+      <div class="sidebar-item" onclick="openUploadModal()">
+        <span class="sidebar-icon">⬆️</span>
+        <span>Upload File</span>
+      </div>
+      <div class="sidebar-item" onclick="openSubjectModal()">
+        <span class="sidebar-icon">➕</span>
+        <span>New Subject</span>
+      </div>
+      <div class="sidebar-item" onclick="openEventModal()">
+        <span class="sidebar-icon">📝</span>
+        <span>Add Event</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <h3 class="sidebar-title">Recent</h3>
+      <div class="sidebar-item">
+        <span class="sidebar-icon">📄</span>
+        <span>Notes.pdf</span>
+      </div>
+      <div class="sidebar-item">
+        <span class="sidebar-icon">📊</span>
+        <span>Report.docx</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content" id="mainContent">
+    <!-- Dashboard Page -->
+    <div class="page" id="dashboardPage">
+      <div class="page-header">
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-subtitle">Welcome back! Here's your academic overview.</p>
+        <div class="page-actions">
+          <button class="btn btn-primary" onclick="openUploadModal()">
+            <span>⬆️</span>
+            <span>Upload Files</span>
+          </button>
+          <button class="btn btn-secondary" onclick="openSubjectModal()">
+            <span>➕</span>
+            <span>Add Subject</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Statistics -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-label">Total Files</span>
+            <div class="stat-icon">📁</div>
+          </div>
+          <div class="stat-value" id="totalFiles">0</div>
+          <div class="stat-change positive">
+            <span>⬆️</span>
+            <span>12% from last week</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-label">Active Subjects</span>
+            <div class="stat-icon">📖</div>
+          </div>
+          <div class="stat-value" id="totalSubjects">0</div>
+          <div class="stat-change positive">
+            <span>⬆️</span>
+            <span>2 new this semester</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-label">Study Hours</span>
+            <div class="stat-icon">⏱️</div>
+          </div>
+          <div class="stat-value">32.5</div>
+          <div class="stat-change positive">
+            <span>⬆️</span>
+            <span>8% increase</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-label">Upcoming Events</span>
+            <div class="stat-icon">📅</div>
+          </div>
+          <div class="stat-value" id="upcomingEvents">0</div>
+          <div class="stat-change">
+            <span>📌</span>
+            <span>3 this week</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Access -->
+      <div class="grid grid-cols-2 gap-lg">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Recent Files</h3>
+            <button class="btn btn-ghost btn-sm" onclick="navigateTo('files')">View All</button>
+          </div>
+          <div class="card-body" id="recentFilesList">
+            <div class="empty-state">
+              <div class="empty-state-icon">📄</div>
+              <h3 class="empty-state-title">No recent files</h3>
+              <p class="empty-state-description">Upload your first file to get started</p>
+              <button class="btn btn-primary" onclick="openUploadModal()">Upload File</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Upcoming Deadlines</h3>
+            <button class="btn btn-ghost btn-sm" onclick="navigateTo('calendar')">View Calendar</button>
+          </div>
+          <div class="card-body" id="deadlinesList">
+            <div class="empty-state">
+              <div class="empty-state-icon">📅</div>
+              <h3 class="empty-state-title">No upcoming deadlines</h3>
+              <p class="empty-state-description">Add events to track your schedule</p>
+              <button class="btn btn-primary" onclick="openEventModal()">Add Event</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subjects Page -->
+    <div class="page hidden" id="subjectsPage">
+      <div class="page-header">
+        <h1 class="page-title">My Subjects</h1>
+        <p class="page-subtitle">Manage your courses and study materials</p>
+        <div class="page-actions">
+          <button class="btn btn-primary" onclick="openSubjectModal()">
+            <span>➕</span>
+            <span>Add Subject</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-auto-fit" id="subjectsGrid">
+        <!-- Subjects will be dynamically inserted here -->
+      </div>
+    </div>
+
+    <!-- Files Page -->
+    <div class="page hidden" id="filesPage">
+      <div class="page-header">
+        <h1 class="page-title">My Files</h1>
+        <p class="page-subtitle">All your study materials in one place</p>
+        <div class="page-actions">
+          <button class="btn btn-primary" onclick="openUploadModal()">
+            <span>⬆️</span>
+            <span>Upload Files</span>
+          </button>
+          <button class="btn btn-secondary" onclick="toggleViewMode()">
+            <span id="viewModeIcon">📋</span>
+            <span>Toggle View</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <div class="file-list" id="filesList">
+            <!-- Files will be dynamically inserted here -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Calendar Page -->
+    <div class="page hidden" id="calendarPage">
+      <div class="page-header">
+        <h1 class="page-title">Academic Calendar</h1>
+        <p class="page-subtitle">Track your schedule and deadlines</p>
+        <div class="page-actions">
+          <button class="btn btn-primary" onclick="openEventModal()">
+            <span>➕</span>
+            <span>Add Event</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1">
+        <div class="calendar">
+          <div class="calendar-header">
+            <button class="btn btn-ghost btn-icon" onclick="previousMonth()">←</button>
+            <h3 class="calendar-title" id="calendarTitle">January 2025</h3>
+            <button class="btn btn-ghost btn-icon" onclick="nextMonth()">→</button>
+          </div>
+          <div class="calendar-grid">
+            <div class="calendar-day-header">Sun</div>
+            <div class="calendar-day-header">Mon</div>
+            <div class="calendar-day-header">Tue</div>
+            <div class="calendar-day-header">Wed</div>
+            <div class="calendar-day-header">Thu</div>
+            <div class="calendar-day-header">Fri</div>
+            <div class="calendar-day-header">Sat</div>
+            <!-- Calendar days will be dynamically inserted -->
+            <div id="calendarDays"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analytics Page -->
+    <div class="page hidden" id="analyticsPage">
+      <div class="page-header">
+        <h1 class="page-title">Analytics</h1>
+        <p class="page-subtitle">Track your academic progress</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-label">Average Progress</span>
+            <div class="stat-icon">📊</div>
+          </div>
+          <div class="stat-value">78%</div>
+          <div class="progress mt-md">
+            <div class="progress-bar" style="width: 78%"></div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-label">Completed Tasks</span>
+            <div class="stat-icon">✅</div>
+          </div>
+          <div class="stat-value">45/60</div>
+          <div class="progress mt-md">
+            <div class="progress-bar" style="width: 75%"></div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-label">Files Uploaded</span>
+            <div class="stat-icon">📤</div>
+          </div>
+          <div class="stat-value">124</div>
+          <div class="stat-change positive">
+            <span>⬆️</span>
+            <span>18% this month</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-label">Study Streak</span>
+            <div class="stat-icon">🔥</div>
+          </div>
+          <div class="stat-value">12 days</div>
+          <div class="stat-change positive">
+            <span>🎯</span>
+            <span>Keep it up!</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Upload Modal -->
+  <div class="modal-backdrop" id="uploadModalBackdrop"></div>
+  <div class="modal" id="uploadModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Upload Files</h2>
+        <button class="modal-close" onclick="closeUploadModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="uploadForm">
+          <div class="form-group">
+            <label class="form-label form-label-required">Subject</label>
+            <select class="form-select" id="uploadSubject" required>
+              <option value="">Select a subject</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">File Type</label>
+            <select class="form-select" id="uploadFileType">
+              <option value="notes">Notes</option>
+              <option value="assignment">Assignment</option>
+              <option value="lecture">Lecture</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <div class="file-upload-zone" id="fileUploadZone">
+              <input type="file" id="fileInput" multiple hidden />
+              <div class="file-upload-icon">📁</div>
+              <div class="file-upload-text">Drop files here or click to browse</div>
+              <div class="file-upload-hint">Supports PDF, DOC, DOCX, TXT, and images</div>
+            </div>
+          </div>
+
+          <div class="file-list" id="uploadFileList"></div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeUploadModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="uploadFiles()">Upload</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subject Modal -->
+  <div class="modal-backdrop" id="subjectModalBackdrop"></div>
+  <div class="modal" id="subjectModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="subjectModalTitle">Add Subject</h2>
+        <button class="modal-close" onclick="closeSubjectModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="subjectForm">
+          <input type="hidden" id="subjectId" />
+          
+          <div class="form-group">
+            <label class="form-label form-label-required">Subject Name</label>
+            <input type="text" class="form-input" id="subjectName" placeholder="e.g., Data Structures" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label form-label-required">Subject Code</label>
+            <input type="text" class="form-input" id="subjectCode" placeholder="e.g., CS301" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Credits</label>
+            <input type="number" class="form-input" id="subjectCredits" placeholder="3" min="1" max="10" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Professor</label>
+            <input type="text" class="form-input" id="subjectProfessor" placeholder="Dr. John Smith" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Description</label>
+            <textarea class="form-textarea" id="subjectDescription" placeholder="Brief description of the subject"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeSubjectModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveSubject()">Save Subject</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Event Modal -->
+  <div class="modal-backdrop" id="eventModalBackdrop"></div>
+  <div class="modal" id="eventModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Add Event</h2>
+        <button class="modal-close" onclick="closeEventModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="eventForm">
+          <div class="form-group">
+            <label class="form-label form-label-required">Event Title</label>
+            <input type="text" class="form-input" id="eventTitle" placeholder="e.g., Midterm Exam" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Subject</label>
+            <select class="form-select" id="eventSubject">
+              <option value="">Select a subject</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label form-label-required">Date</label>
+            <input type="date" class="form-input" id="eventDate" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Time</label>
+            <input type="time" class="form-input" id="eventTime" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Type</label>
+            <select class="form-select" id="eventType">
+              <option value="exam">Exam</option>
+              <option value="assignment">Assignment Due</option>
+              <option value="lecture">Lecture</option>
+              <option value="project">Project</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Notes</label>
+            <textarea class="form-textarea" id="eventNotes" placeholder="Additional notes"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeEventModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveEvent()">Save Event</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================
+    // APPLICATION STATE
+    // ============================================
+    const AppState = {
+      currentPage: 'dashboard',
+      theme: 'light',
+      subjects: [],
+      files: [],
+      events: [],
+      currentMonth: new Date().getMonth(),
+      currentYear: new Date().getFullYear(),
+      viewMode: 'list' // 'list' or 'grid'
+    };
+
+    // ============================================
+    // LOCAL STORAGE UTILITIES
+    // ============================================
+    const Storage = {
+      get(key, defaultValue = null) {
+        try {
+          const item = localStorage.getItem(key);
+          return item ? JSON.parse(item) : defaultValue;
+        } catch (error) {
+          console.error('Error reading from localStorage:', error);
+          return defaultValue;
+        }
+      },
+      
+      set(key, value) {
+        try {
+          localStorage.setItem(key, JSON.stringify(value));
+          return true;
+        } catch (error) {
+          console.error('Error writing to localStorage:', error);
+          return false;
+        }
+      },
+      
+      remove(key) {
+        try {
+          localStorage.removeItem(key);
+          return true;
+        } catch (error) {
+          console.error('Error removing from localStorage:', error);
+          return false;
+        }
+      },
+      
+      clear() {
+        try {
+          localStorage.clear();
+          return true;
+        } catch (error) {
+          console.error('Error clearing localStorage:', error);
+          return false;
+        }
+      }
+    };
+
+    // ============================================
+    // TOAST NOTIFICATIONS
+    // ============================================
+    function showToast(title, message, type = 'info') {
+      const toastContainer = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      
+      const iconMap = {
+        success: '✓',
+        error: '✕',
+        warning: '⚠',
+        info: 'ℹ'
+      };
+      
+      toast.innerHTML = `
+        <div class="toast-icon">${iconMap[type]}</div>
+        <div class="toast-content">
+          <div class="toast-title">${title}</div>
+          <div class="toast-message">${message}</div>
+        </div>
+        <button class="toast-close" onclick="this.parentElement.remove()">✕</button>
+      `;
+      
+      toastContainer.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.animation = 'slideIn 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55) reverse';
+        setTimeout(() => toast.remove(), 300);
+      }, 5000);
+    }
+
+    // ============================================
+    // THEME MANAGEMENT
+    // ============================================
+    function initTheme() {
+      const savedTheme = Storage.get('theme', 'light');
+      AppState.theme = savedTheme;
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      updateThemeIcon();
+    }
+
+    function toggleTheme() {
+      AppState.theme = AppState.theme === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', AppState.theme);
+      Storage.set('theme', AppState.theme);
+      updateThemeIcon();
+      showToast('Theme Changed', `Switched to ${AppState.theme} mode`, 'success');
+    }
+
+    function updateThemeIcon() {
+      const themeIcon = document.getElementById('themeIcon');
+      themeIcon.textContent = AppState.theme === 'light' ? '🌙' : '☀️';
+    }
+
+    // ============================================
+    // NAVIGATION
+    // ============================================
+    function navigateTo(page) {
+      // Hide all pages
+      document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+      
+      // Show selected page
+      const pageElement = document.getElementById(`${page}Page`);
+      if (pageElement) {
+        pageElement.classList.remove('hidden');
+        AppState.currentPage = page;
+        
+        // Update navigation links
+        document.querySelectorAll('.navbar-link, .sidebar-item').forEach(link => {
+          link.classList.remove('active');
+          if (link.dataset.page === page) {
+            link.classList.add('active');
+          }
+        });
+        
+        // Load page data
+        loadPageData(page);
+      }
+    }
+
+    function loadPageData(page) {
+      switch (page) {
+        case 'dashboard':
+          loadDashboard();
+          break;
+        case 'subjects':
+          renderSubjects();
+          break;
+        case 'files':
+          renderFiles();
+          break;
+        case 'calendar':
+          renderCalendar();
+          break;
+        case 'analytics':
+          // Analytics data is static in this version
+          break;
+      }
+    }
+
+    // ============================================
+    // DASHBOARD
+    // ============================================
+    function loadDashboard() {
+      // Update statistics
+      document.getElementById('totalFiles').textContent = AppState.files.length;
+      document.getElementById('totalSubjects').textContent = AppState.subjects.length;
+      document.getElementById('upcomingEvents').textContent = AppState.events.length;
+      
+      // Render recent files
+      renderRecentFiles();
+      
+      // Render upcoming deadlines
+      renderUpcomingDeadlines();
+    }
+
+    function renderRecentFiles() {
+      const container = document.getElementById('recentFilesList');
+      const recentFiles = AppState.files.slice(-5).reverse();
+      
+      if (recentFiles.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📄</div>
+            <h3 class="empty-state-title">No recent files</h3>
+            <p class="empty-state-description">Upload your first file to get started</p>
+            <button class="btn btn-primary" onclick="openUploadModal()">Upload File</button>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = recentFiles.map(file => `
+        <div class="file-item">
+          <div class="file-icon">${getFileIcon(file.type)}</div>
+          <div class="file-info">
+            <div class="file-name">${file.name}</div>
+            <div class="file-meta">
+              <span>${formatDate(file.uploadDate)}</span>
+              <span>${file.size}</span>
+            </div>
+          </div>
+          <div class="file-actions">
+            <button class="btn btn-ghost btn-icon" onclick="downloadFile('${file.id}')">⬇️</button>
+            <button class="btn btn-ghost btn-icon" onclick="deleteFile('${file.id}')">🗑️</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderUpcomingDeadlines() {
+      const container = document.getElementById('deadlinesList');
+      const upcomingEvents = AppState.events
+        .filter(event => new Date(event.date) >= new Date())
+        .sort((a, b) => new Date(a.date) - new Date(b.date))
+        .slice(0, 5);
+      
+      if (upcomingEvents.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📅</div>
+            <h3 class="empty-state-title">No upcoming deadlines</h3>
+            <p class="empty-state-description">Add events to track your schedule</p>
+            <button class="btn btn-primary" onclick="openEventModal()">Add Event</button>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = upcomingEvents.map(event => `
+        <div class="file-item">
+          <div class="file-icon">${getEventIcon(event.type)}</div>
+          <div class="file-info">
+            <div class="file-name">${event.title}</div>
+            <div class="file-meta">
+              <span>${formatDate(event.date)}</span>
+              <span>${event.time || 'No time set'}</span>
+            </div>
+          </div>
+          <div class="file-actions">
+            <span class="badge badge-${getEventBadgeColor(event.type)}">${event.type}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ============================================
+    // SUBJECTS
+    // ============================================
+    function renderSubjects() {
+      const grid = document.getElementById('subjectsGrid');
+      
+      if (AppState.subjects.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state" style="grid-column: 1 / -1;">
+            <div class="empty-state-icon">📖</div>
+            <h3 class="empty-state-title">No subjects yet</h3>
+            <p class="empty-state-description">Add your first subject to organize your materials</p>
+            <button class="btn btn-primary" onclick="openSubjectModal()">Add Subject</button>
+          </div>
+        `;
+        return;
+      }
+      
+      grid.innerHTML = AppState.subjects.map(subject => {
+        const subjectFiles = AppState.files.filter(f => f.subjectId === subject.id);
+        return `
+          <div class="card subject-card">
+            <div class="subject-header">
+              <div class="subject-icon">${getSubjectIcon(subject.name)}</div>
+              <div class="subject-info">
+                <div class="subject-name">${subject.name}</div>
+                <div class="subject-code">${subject.code}</div>
+              </div>
+              <div class="dropdown">
+                <button class="btn btn-ghost btn-icon dropdown-toggle">⋮</button>
+                <div class="dropdown-menu">
+                  <div class="dropdown-item" onclick="editSubject('${subject.id}')">
+                    <span>✏️</span>
+                    <span>Edit</span>
+                  </div>
+                  <div class="dropdown-item" onclick="deleteSubject('${subject.id}')">
+                    <span>🗑️</span>
+                    <span>Delete</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="subject-stats">
+              <div class="subject-stat">
+                <span class="subject-stat-value">${subjectFiles.length}</span>
+                <span class="subject-stat-label">Files</span>
+              </div>
+              <div class="subject-stat">
+                <span class="subject-stat-value">${subject.credits || 3}</span>
+                <span class="subject-stat-label">Credits</span>
+              </div>
+              <div class="subject-stat">
+                <span class="subject-stat-value">${Math.floor(Math.random() * 100)}%</span>
+                <span class="subject-stat-label">Progress</span>
+              </div>
+            </div>
+            
+            <div class="card-footer">
+              <span class="text-sm text-secondary">${subject.professor || 'No professor'}</span>
+              <button class="btn btn-ghost btn-sm" onclick="filterFilesBySubject('${subject.id}')">View Files</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      // Initialize dropdowns
+      initDropdowns();
+    }
+
+    function openSubjectModal(subjectId = null) {
+      const modal = document.getElementById('subjectModal');
+      const backdrop = document.getElementById('subjectModalBackdrop');
+      const title = document.getElementById('subjectModalTitle');
+      
+      if (subjectId) {
+        const subject = AppState.subjects.find(s => s.id === subjectId);
+        if (subject) {
+          title.textContent = 'Edit Subject';
+          document.getElementById('subjectId').value = subject.id;
+          document.getElementById('subjectName').value = subject.name;
+          document.getElementById('subjectCode').value = subject.code;
+          document.getElementById('subjectCredits').value = subject.credits || '';
+          document.getElementById('subjectProfessor').value = subject.professor || '';
+          document.getElementById('subjectDescription').value = subject.description || '';
+        }
+      } else {
+        title.textContent = 'Add Subject';
+        document.getElementById('subjectForm').reset();
+        document.getElementById('subjectId').value = '';
+      }
+      
+      modal.classList.add('active');
+      backdrop.classList.add('active');
+    }
+
+    function closeSubjectModal() {
+      document.getElementById('subjectModal').classList.remove('active');
+      document.getElementById('subjectModalBackdrop').classList.remove('active');
+      document.getElementById('subjectForm').reset();
+    }
+
+    function saveSubject() {
+      const id = document.getElementById('subjectId').value;
+      const name = document.getElementById('subjectName').value.trim();
+      const code = document.getElementById('subjectCode').value.trim();
+      const credits = parseInt(document.getElementById('subjectCredits').value) || 3;
+      const professor = document.getElementById('subjectProfessor').value.trim();
+      const description = document.getElementById('subjectDescription').value.trim();
+      
+      if (!name || !code) {
+        showToast('Validation Error', 'Please fill in all required fields', 'error');
+        return;
+      }
+      
+      if (id) {
+        // Update existing subject
+        const index = AppState.subjects.findIndex(s => s.id === id);
+        if (index !== -1) {
+          AppState.subjects[index] = {
+            ...AppState.subjects[index],
+            name,
+            code,
+            credits,
+            professor,
+            description,
+            updatedAt: new Date().toISOString()
+          };
+          showToast('Subject Updated', `${name} has been updated successfully`, 'success');
+        }
+      } else {
+        // Create new subject
+        const newSubject = {
+          id: generateId(),
+          name,
+          code,
+          credits,
+          professor,
+          description,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        AppState.subjects.push(newSubject);
+        showToast('Subject Added', `${name} has been added successfully`, 'success');
+      }
+      
+      saveData();
+      closeSubjectModal();
+      renderSubjects();
+      loadDashboard();
+      updateSubjectSelects();
+    }
+
+    function editSubject(id) {
+      openSubjectModal(id);
+    }
+
+    function deleteSubject(id) {
+      if (!confirm('Are you sure you want to delete this subject? All associated files will be unlinked.')) {
+        return;
+      }
+      
+      const subject = AppState.subjects.find(s => s.id === id);
+      AppState.subjects = AppState.subjects.filter(s => s.id !== id);
+      
+      // Unlink files from this subject
+      AppState.files = AppState.files.map(f => {
+        if (f.subjectId === id) {
+          return { ...f, subjectId: null };
+        }
+        return f;
+      });
+      
+      saveData();
+      showToast('Subject Deleted', `${subject.name} has been deleted`, 'success');
+      renderSubjects();
+      loadDashboard();
+      updateSubjectSelects();
+    }
+
+    // ============================================
+    // FILES
+    // ============================================
+    function renderFiles() {
+      const container = document.getElementById('filesList');
+      
+      if (AppState.files.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📁</div>
+            <h3 class="empty-state-title">No files yet</h3>
+            <p class="empty-state-description">Upload your first file to get started</p>
+            <button class="btn btn-primary" onclick="openUploadModal()">Upload Files</button>
+          </div>
+        `;
+        return;
+      }
+      
+      if (AppState.viewMode === 'list') {
+        renderFilesList(container);
+      } else {
+        renderFilesGrid(container);
+      }
+    }
+
+    function renderFilesList(container) {
+      container.innerHTML = AppState.files.map(file => {
+        const subject = AppState.subjects.find(s => s.id === file.subjectId);
+        return `
+          <div class="file-item">
+            <div class="file-icon">${getFileIcon(file.type)}</div>
+            <div class="file-info">
+              <div class="file-name">${file.name}</div>
+              <div class="file-meta">
+                <span>${subject ? subject.name : 'No subject'}</span>
+                <span>${formatDate(file.uploadDate)}</span>
+                <span>${file.size}</span>
+              </div>
+            </div>
+            <div class="file-actions">
+              <span class="badge badge-primary">${file.fileType}</span>
+              <button class="btn btn-ghost btn-icon" onclick="downloadFile('${file.id}')" title="Download">⬇️</button>
+              <button class="btn btn-ghost btn-icon" onclick="deleteFile('${file.id}')" title="Delete">🗑️</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderFilesGrid(container) {
+      container.innerHTML = `
+        <div class="file-grid">
+          ${AppState.files.map(file => `
+            <div class="file-card" onclick="downloadFile('${file.id}')">
+              <div class="file-card-icon">${getFileIcon(file.type)}</div>
+              <div class="file-card-name" title="${file.name}">${file.name}</div>
+              <div class="file-card-size">${file.size}</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function toggleViewMode() {
+      AppState.viewMode = AppState.viewMode === 'list' ? 'grid' : 'list';
+      document.getElementById('viewModeIcon').textContent = AppState.viewMode === 'list' ? '📋' : '📊';
+      renderFiles();
+    }
+
+    function filterFilesBySubject(subjectId) {
+      navigateTo('files');
+      // In a full implementation, this would filter the files
+      showToast('Filtered', 'Showing files for selected subject', 'info');
+    }
+
+    function openUploadModal() {
+      const modal = document.getElementById('uploadModal');
+      const backdrop = document.getElementById('uploadModalBackdrop');
+      modal.classList.add('active');
+      backdrop.classList.add('active');
+      updateSubjectSelects();
+    }
+
+    function closeUploadModal() {
+      document.getElementById('uploadModal').classList.remove('active');
+      document.getElementById('uploadModalBackdrop').classList.remove('active');
+      document.getElementById('uploadForm').reset();
+      document.getElementById('uploadFileList').innerHTML = '';
+    }
+
+    function uploadFiles() {
+      const subjectId = document.getElementById('uploadSubject').value;
+      const fileType = document.getElementById('uploadFileType').value;
+      const fileInput = document.getElementById('fileInput');
+      
+      if (!subjectId) {
+        showToast('Validation Error', 'Please select a subject', 'error');
+        return;
+      }
+      
+      if (!fileInput.files.length) {
+        showToast('Validation Error', 'Please select files to upload', 'error');
+        return;
+      }
+      
+      // Simulate file upload
+      Array.from(fileInput.files).forEach(file => {
+        const newFile = {
+          id: generateId(),
+          name: file.name,
+          size: formatFileSize(file.size),
+          type: file.type,
+          fileType: fileType,
+          subjectId: subjectId,
+          uploadDate: new Date().toISOString()
+        };
+        AppState.files.push(newFile);
+      });
+      
+      saveData();
+      showToast('Upload Successful', `${fileInput.files.length} file(s) uploaded successfully`, 'success');
+      closeUploadModal();
+      renderFiles();
+      loadDashboard();
+    }
+
+    function deleteFile(id) {
+      if (!confirm('Are you sure you want to delete this file?')) {
+        return;
+      }
+      
+      const file = AppState.files.find(f => f.id === id);
+      AppState.files = AppState.files.filter(f => f.id !== id);
+      saveData();
+      showToast('File Deleted', `${file.name} has been deleted`, 'success');
+      renderFiles();
+      loadDashboard();
+    }
+
+    function downloadFile(id) {
+      const file = AppState.files.find(f => f.id === id);
+      showToast('Download Started', `Downloading ${file.name}`, 'info');
+      // In a real app, this would trigger actual file download
+    }
+
+    // ============================================
+    // CALENDAR
+    // ============================================
+    function renderCalendar() {
+      const title = document.getElementById('calendarTitle');
+      const daysContainer = document.getElementById('calendarDays');
+      
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'];
+      
+      title.textContent = `${monthNames[AppState.currentMonth]} ${AppState.currentYear}`;
+      
+      const firstDay = new Date(AppState.currentYear, AppState.currentMonth, 1).getDay();
+      const daysInMonth = new Date(AppState.currentYear, AppState.currentMonth + 1, 0).getDate();
+      const today = new Date();
+      
+      let html = '';
+      
+      // Add empty cells for days before the first day of the month
+      for (let i = 0; i < firstDay; i++) {
+        html += '<div class="calendar-day"></div>';
+      }
+      
+      // Add days of the month
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(AppState.currentYear, AppState.currentMonth, day);
+        const isToday = date.toDateString() === today.toDateString();
+        const hasEvent = AppState.events.some(e => {
+          const eventDate = new Date(e.date);
+          return eventDate.toDateString() === date.toDateString();
+        });
+        
+        html += `
+          <div class="calendar-day ${isToday ? 'today' : ''} ${hasEvent ? 'has-event' : ''}" onclick="showDayEvents('${date.toISOString()}')">
+            ${day}
+          </div>
+        `;
+      }
+      
+      daysContainer.innerHTML = html;
+    }
+
+    function previousMonth() {
+      if (AppState.currentMonth === 0) {
+        AppState.currentMonth = 11;
+        AppState.currentYear--;
+      } else {
+        AppState.currentMonth--;
+      }
+      renderCalendar();
+    }
+
+    function nextMonth() {
+      if (AppState.currentMonth === 11) {
+        AppState.currentMonth = 0;
+        AppState.currentYear++;
+      } else {
+        AppState.currentMonth++;
+      }
+      renderCalendar();
+    }
+
+    function showDayEvents(dateStr) {
+      const date = new Date(dateStr);
+      const dayEvents = AppState.events.filter(e => {
+        const eventDate = new Date(e.date);
+        return eventDate.toDateString() === date.toDateString();
+      });
+      
+      if (dayEvents.length > 0) {
+        showToast('Events', `${dayEvents.length} event(s) on this day`, 'info');
+      } else {
+        showToast('No Events', 'No events scheduled for this day', 'info');
+      }
+    }
+
+    // ============================================
+    // EVENTS
+    // ============================================
+    function openEventModal() {
+      const modal = document.getElementById('eventModal');
+      const backdrop = document.getElementById('eventModalBackdrop');
+      modal.classList.add('active');
+      backdrop.classList.add('active');
+      updateSubjectSelects();
+      
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('eventDate').value = today;
+    }
+
+    function closeEventModal() {
+      document.getElementById('eventModal').classList.remove('active');
+      document.getElementById('eventModalBackdrop').classList.remove('active');
+      document.getElementById('eventForm').reset();
+    }
+
+    function saveEvent() {
+      const title = document.getElementById('eventTitle').value.trim();
+      const subjectId = document.getElementById('eventSubject').value;
+      const date = document.getElementById('eventDate').value;
+      const time = document.getElementById('eventTime').value;
+      const type = document.getElementById('eventType').value;
+      const notes = document.getElementById('eventNotes').value.trim();
+      
+      if (!title || !date) {
+        showToast('Validation Error', 'Please fill in all required fields', 'error');
+        return;
+      }
+      
+      const newEvent = {
+        id: generateId(),
+        title,
+        subjectId: subjectId || null,
+        date,
+        time: time || null,
+        type,
+        notes,
+        createdAt: new Date().toISOString()
+      };
+      
+      AppState.events.push(newEvent);
+      saveData();
+      showToast('Event Added', `${title} has been added to your calendar`, 'success');
+      closeEventModal();
+      renderCalendar();
+      loadDashboard();
+    }
+
+    // ============================================
+    // USER FUNCTIONS
+    // ============================================
+    function showProfile() {
+      showToast('Profile', 'Profile page coming soon!', 'info');
+    }
+
+    function showSettings() {
+      showToast('Settings', 'Settings page coming soon!', 'info');
+    }
+
+    function logout() {
+      if (confirm('Are you sure you want to logout?')) {
+        showToast('Logged Out', 'You have been logged out successfully', 'success');
+        setTimeout(() => window.location.reload(), 1500);
+      }
+    }
+
+    // ============================================
+    // DROPDOWN FUNCTIONALITY
+    // ============================================
+    function initDropdowns() {
+      document.querySelectorAll('.dropdown').forEach(dropdown => {
+        const toggle = dropdown.querySelector('.dropdown-toggle');
+        const menu = dropdown.querySelector('.dropdown-menu');
+        
+        if (toggle && menu) {
+          toggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.querySelectorAll('.dropdown.active').forEach(d => {
+              if (d !== dropdown) d.classList.remove('active');
+            });
+            dropdown.classList.toggle('active');
+          });
+        }
+      });
+      
+      document.addEventListener('click', () => {
+        document.querySelectorAll('.dropdown.active').forEach(d => {
+          d.classList.remove('active');
+        });
+      });
+    }
+
+    // ============================================
+    // FILE UPLOAD
+    // ============================================
+    function initFileUpload() {
+      const uploadZone = document.getElementById('fileUploadZone');
+      const fileInput = document.getElementById('fileInput');
+      
+      uploadZone.addEventListener('click', () => fileInput.click());
+      
+      uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.classList.add('drag-over');
+      });
+      
+      uploadZone.addEventListener('dragleave', () => {
+        uploadZone.classList.remove('drag-over');
+      });
+      
+      uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove('drag-over');
+        fileInput.files = e.dataTransfer.files;
+        displaySelectedFiles();
+      });
+      
+      fileInput.addEventListener('change', displaySelectedFiles);
+    }
+
+    function displaySelectedFiles() {
+      const fileInput = document.getElementById('fileInput');
+      const fileList = document.getElementById('uploadFileList');
+      
+      if (fileInput.files.length === 0) {
+        fileList.innerHTML = '';
+        return;
+      }
+      
+      fileList.innerHTML = Array.from(fileInput.files).map((file, index) => `
+        <div class="file-item">
+          <div class="file-icon">${getFileIcon(file.type)}</div>
+          <div class="file-info">
+            <div class="file-name">${file.name}</div>
+            <div class="file-meta"><span>${formatFileSize(file.size)}</span></div>
+          </div>
+          <button class="btn btn-ghost btn-icon" onclick="removeSelectedFile(${index})">✕</button>
+        </div>
+      `).join('');
+    }
+
+    function removeSelectedFile(index) {
+      const fileInput = document.getElementById('fileInput');
+      const dt = new DataTransfer();
+      Array.from(fileInput.files).forEach((file, i) => {
+        if (i !== index) dt.items.add(file);
+      });
+      fileInput.files = dt.files;
+      displaySelectedFiles();
+    }
+
+    // ============================================
+    // MOBILE NAVIGATION
+    // ============================================
+    function initMobileNavigation() {
+      const navbarToggle = document.getElementById('navbarToggle');
+      const sidebar = document.getElementById('sidebar');
+      const navbarMenu = document.getElementById('navbarMenu');
+      
+      navbarToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('mobile-open');
+        navbarMenu.classList.toggle('mobile-open');
+      });
+      
+      document.querySelectorAll('.sidebar-item, .navbar-link').forEach(link => {
+        link.addEventListener('click', () => {
+          if (window.innerWidth <= 1024) {
+            sidebar.classList.remove('mobile-open');
+            navbarMenu.classList.remove('mobile-open');
+          }
+        });
+      });
+    }
+
+    // ============================================
+    // SEARCH
+    // ============================================
+    function initSearch() {
+      const searchInput = document.getElementById('globalSearch');
+      let searchTimeout;
+      
+      searchInput.addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => performSearch(e.target.value), 300);
+      });
+    }
+
+    function performSearch(query) {
+      if (!query.trim()) return;
+      
+      const results = {
+        subjects: AppState.subjects.filter(s => 
+          s.name.toLowerCase().includes(query.toLowerCase()) ||
+          s.code.toLowerCase().includes(query.toLowerCase())
+        ),
+        files: AppState.files.filter(f => 
+          f.name.toLowerCase().includes(query.toLowerCase())
+        ),
+        events: AppState.events.filter(e => 
+          e.title.toLowerCase().includes(query.toLowerCase())
+        )
+      };
+      
+      const total = results.subjects.length + results.files.length + results.events.length;
+      showToast('Search Results', total > 0 ? `Found ${total} result(s)` : 'No matches', total > 0 ? 'success' : 'info');
+    }
+
+    // ============================================
+    // KEYBOARD SHORTCUTS
+    // ============================================
+    function initKeyboardShortcuts() {
+      document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+          e.preventDefault();
+          document.getElementById('globalSearch').focus();
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
+          e.preventDefault();
+          openUploadModal();
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+          e.preventDefault();
+          openSubjectModal();
+        }
+        if (e.key === 'Escape') {
+          closeUploadModal();
+          closeSubjectModal();
+          closeEventModal();
+        }
+      });
+    }
+
+    // ============================================
+    // UTILITIES
+    // ============================================
+    function generateId() {
+      return 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    }
+
+    function formatDate(dateString) {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffDays = Math.ceil(Math.abs(now - date) / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 0) return 'Today';
+      if (diffDays === 1) return 'Yesterday';
+      if (diffDays < 7) return `${diffDays} days ago`;
+      return date.toLocaleDateString();
+    }
+
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    }
+
+    function getFileIcon(type) {
+      if (type.includes('pdf')) return '📄';
+      if (type.includes('word') || type.includes('doc')) return '📝';
+      if (type.includes('sheet') || type.includes('excel')) return '📊';
+      if (type.includes('presentation') || type.includes('powerpoint')) return '📽️';
+      if (type.includes('image')) return '🖼️';
+      if (type.includes('video')) return '🎥';
+      if (type.includes('audio')) return '🎵';
+      if (type.includes('zip') || type.includes('rar')) return '📦';
+      return '📄';
+    }
+
+    function getSubjectIcon(name) {
+      const n = name.toLowerCase();
+      if (n.includes('math')) return '🔢';
+      if (n.includes('computer') || n.includes('programming')) return '💻';
+      if (n.includes('physics')) return '⚛️';
+      if (n.includes('chemistry')) return '🧪';
+      if (n.includes('biology')) return '🧬';
+      if (n.includes('english') || n.includes('literature')) return '📚';
+      if (n.includes('history')) return '📜';
+      if (n.includes('geography')) return '🌍';
+      if (n.includes('art')) return '🎨';
+      if (n.includes('music')) return '🎵';
+      return '📖';
+    }
+
+    function getEventIcon(type) {
+      const icons = { exam: '📝', assignment: '📋', lecture: '👨‍🏫', project: '💼', other: '📅' };
+      return icons[type] || '📅';
+    }
+
+    function getEventBadgeColor(type) {
+      const colors = { exam: 'danger', assignment: 'warning', lecture: 'info', project: 'primary', other: 'success' };
+      return colors[type] || 'primary';
+    }
+
+    function updateSubjectSelects() {
+      const options = AppState.subjects.map(s => `<option value="${s.id}">${s.name} (${s.code})</option>`).join('');
+      document.getElementById('uploadSubject').innerHTML = '<option value="">Select a subject</option>' + options;
+      document.getElementById('eventSubject').innerHTML = '<option value="">Select a subject</option>' + options;
+    }
+
+    // ============================================
+    // DATA PERSISTENCE
+    // ============================================
+    function saveData() {
+      Storage.set('subjects', AppState.subjects);
+      Storage.set('files', AppState.files);
+      Storage.set('events', AppState.events);
+    }
+
+    function loadData() {
+      AppState.subjects = Storage.get('subjects', []);
+      AppState.files = Storage.get('files', []);
+      AppState.events = Storage.get('events', []);
+    }
+
+    // ============================================
+    // INITIALIZATION
+    // ============================================
+    function init() {
+      loadData();
+      initTheme();
+      
+      document.querySelectorAll('.navbar-link, .sidebar-item').forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          if (link.dataset.page) navigateTo(link.dataset.page);
+        });
+      });
+      
+      initDropdowns();
+      initFileUpload();
+      initMobileNavigation();
+      initSearch();
+      initKeyboardShortcuts();
+      
+      document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+      document.getElementById('userAvatar').addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.getElementById('userDropdown').classList.toggle('active');
+      });
+      
+      document.getElementById('uploadModalBackdrop').addEventListener('click', closeUploadModal);
+      document.getElementById('subjectModalBackdrop').addEventListener('click', closeSubjectModal);
+      document.getElementById('eventModalBackdrop').addEventListener('click', closeEventModal);
+      
+      loadDashboard();
+      
+      setTimeout(() => showToast('Welcome Back!', 'Your academic hub is ready', 'success'), 500);
+      
+      if (AppState.subjects.length === 0) addDemoData();
+    }
+
+    // ============================================
+    // DEMO DATA
+    // ============================================
+    function addDemoData() {
+      AppState.subjects = [
+        { id: generateId(), name: 'Data Structures', code: 'CS301', credits: 4, professor: 'Dr. Sarah Johnson', description: 'Advanced data structures', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+        { id: generateId(), name: 'Machine Learning', code: 'CS401', credits: 4, professor: 'Dr. Michael Chen', description: 'ML algorithms and applications', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+        { id: generateId(), name: 'Database Systems', code: 'CS305', credits: 3, professor: 'Dr. Emily White', description: 'Relational databases and SQL', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
+      ];
+      
+      AppState.files = [
+        { id: generateId(), name: 'Lecture_Notes_Week1.pdf', size: '2.5 MB', type: 'application/pdf', fileType: 'notes', subjectId: AppState.subjects[0].id, uploadDate: new Date(Date.now() - 172800000).toISOString() },
+        { id: generateId(), name: 'Assignment_1.docx', size: '1.8 MB', type: 'application/msword', fileType: 'assignment', subjectId: AppState.subjects[1].id, uploadDate: new Date(Date.now() - 432000000).toISOString() },
+        { id: generateId(), name: 'Lab_Manual.pdf', size: '3.2 MB', type: 'application/pdf', fileType: 'lecture', subjectId: AppState.subjects[2].id, uploadDate: new Date(Date.now() - 86400000).toISOString() }
+      ];
+      
+      AppState.events = [
+        { id: generateId(), title: 'Midterm Exam - Data Structures', subjectId: AppState.subjects[0].id, date: new Date(Date.now() + 604800000).toISOString().split('T')[0], time: '10:00', type: 'exam', notes: 'Chapters 1-5', createdAt: new Date().toISOString() },
+        { id: generateId(), title: 'ML Project Submission', subjectId: AppState.subjects[1].id, date: new Date(Date.now() + 1209600000).toISOString().split('T')[0], time: '23:59', type: 'project', notes: 'Final project', createdAt: new Date().toISOString() }
+      ];
+      
+      saveData();
+      loadDashboard();
+      renderSubjects();
+    }
+
+    // ============================================
+    // SERVICE WORKER (PWA)
+    // ============================================
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(e => console.log('SW registration failed:', e));
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
+
